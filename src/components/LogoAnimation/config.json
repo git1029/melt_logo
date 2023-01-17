@@ -1,0 +1,28 @@
+{
+  "logoSettings": {
+    "displacement": {
+      "strength": 1,
+      "radius": 1,
+      "decay": 0.5,
+      "noise": 1,
+      "colorShift": 1,
+      "frequency": 1,
+      "amplitude": 0.2
+    },
+    "refraction": {
+      "zoom": 152,
+      "refractionRatio": 17,
+      "mouseSpeed": 20,
+      "rotAngle": {
+        "x": 90,
+        "y": 50,
+        "z": 145
+      },
+      "rotSpeed": {
+        "x": -9,
+        "y": -3,
+        "z": 3
+      }
+    }
+  }
+}
