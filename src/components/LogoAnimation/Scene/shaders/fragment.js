@@ -6,6 +6,7 @@ export default /* glsl */ `
   uniform float PI;
   uniform vec3 uDisp; // vec4(strength, noise, colorShift)
   uniform float uShowMouse;
+  uniform float uDPR;
   uniform vec4 uResolution;
   // uniform vec3 uWave;
   uniform vec3 uTransition;
@@ -40,6 +41,9 @@ export default /* glsl */ `
     vec2 uv = gl_FragCoord.xy / uResolution.xy;
     vec2 uv_ = gl_FragCoord.xy / uResolution.xy;
 
+    float dprScl = 1./uDPR;
+    uv *= dprScl;
+    uv_ *= dprScl;
 
     vec3 normal = worldNormal;
     vec3 ev = eyeVector;
@@ -95,6 +99,9 @@ export default /* glsl */ `
     uv += (1.-uvScl)/2.;
     uv = uv * imgScale - imgOff;
     vec2 vUv3 = uv;
+
+    // vUv3 += (1.-dprScl)/2.;
+    // uv_ += (1.-dprScl)/4.;
     // vUv3 = vUv3 * .3333 + vec2(0.333);
     // vec4 tex = texture2D(envMap, vUv);
       

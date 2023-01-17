@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useLayoutEffect } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree, createPortal, useLoader } from '@react-three/fiber'
 import {
@@ -46,8 +46,26 @@ const Scene = () => {
   // }, [])
   // console.log(logoConfig)
 
+  useLayoutEffect(() => {
+    // three.gl.setPixelRatio(1)
+    console.log(three.gl)
+    console.log(three.gl.getSize(new THREE.Vector2()))
+    console.log(three.gl.getViewport(new THREE.Vector4()))
+    console.log(three.gl.getPixelRatio())
+    console.log(three.size)
+    console.log(three.viewport)
+    console.log(three.viewport.getCurrentViewport())
+  }, [])
+
   const three = useThree()
-  const { size, viewport } = three
+  const { size, viewport, gl } = three
+
+  // gl.setViewport(0, 0, size.width * gl.dpr, size.height * gl.dpr)
+
+  // console.log(viewport)
+  // // gl.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+  // gl.setViewport(0, 0, size.width * viewport.dpr, size.height * viewport.dpr)
+  // console.log(viewport)
 
   const { strength, noise, colorShift } = useControls('mouse displacement', {
     strength: {
@@ -248,6 +266,7 @@ const Scene = () => {
       PI: { value: Math.PI },
       uMouse: { value: new THREE.Vector2() },
       refractionRatio: { value: 1 },
+      uDPR: { value: viewport.dpr },
     }
 
     // console.log(uniforms.uResolution)
@@ -301,6 +320,7 @@ const Scene = () => {
         90,
         50
       )
+      cam.current.updateProjectionMatrix()
     }
 
     // cam2.aspect = viewport.width / viewport.height

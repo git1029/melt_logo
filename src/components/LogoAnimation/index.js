@@ -14,13 +14,22 @@ const PerfMonitor = ({ visible }) => {
 }
 
 const glSettings = {
-  antialias: false,
+  // antialias: false,
 }
 
-const created = (state) => {
+const created = ({ gl, size, viewport, camera }) => {
   console.log('Canvas ready')
-  state.gl.domElement.id = 'logoAnimation'
-  state.gl.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+  gl.domElement.id = 'logoAnimation'
+  // state.gl.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+  // console.log(viewport)
+  // // gl.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+  // gl.setSize(size.width, size.height)
+  // gl.setViewport(0, 0, size.width * viewport.dpr, size.height * viewport.dpr)
+  // console.log(viewport)
+
+  // state.gl.setPixelRatio(2)
+  // state.gl.setPixelRatio(1)
 }
 
 const LogoAnimation = (props) => {
@@ -30,8 +39,8 @@ const LogoAnimation = (props) => {
     <>
       <Leva hidden={!controls} />
       <div style={{ width: '100%', height: '100vh', maxHeight: '1000px' }}>
-        {/* <Canvas dpr={[1, 2]} gl={glSettings} onCreated={created}> */}
-        <Canvas gl={glSettings} onCreated={created}>
+        <Canvas dpr={[1, 2]} gl={glSettings} onCreated={created}>
+          {/* <Canvas gl={glSettings} onCreated={created}> */}
           <PerfMonitor visible={controls} />
           <Scene />
         </Canvas>
