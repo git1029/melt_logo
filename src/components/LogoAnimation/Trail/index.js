@@ -18,6 +18,7 @@ const Trail = forwardRef(({ radius, decay }, ref) => {
   const { viewport } = useThree()
 
   const [loaded, setLoaded] = useState(false)
+  const [mousePoints, setMousePoints] = useState(false)
 
   const [points, position, next, prev, info, index, uniforms] = useMemo(() => {
     const points = []
@@ -68,13 +69,13 @@ const Trail = forwardRef(({ radius, decay }, ref) => {
   }, [])
 
   const mouse = new THREE.Vector3()
+  const mouseLast = new THREE.Vector3()
 
   useFrame((state, delta) => {
     // https://github.com/pmndrs/react-three-fiber/discussions/941
     mouse.set(state.mouse.x, state.mouse.y, 0)
 
-    // console.log(state.mouseInited)
-    if (state.mouseInited) {
+    if (!mousePoints && mouse.clone().sub(mouseLast).length() > 0.01) {
       for (let i = 0; i < pointCount; i++) {
         points[i].set(state.mouse.x, state.mouse.y, 0)
       }
@@ -92,9 +93,13 @@ const Trail = forwardRef(({ radius, decay }, ref) => {
       geometry.current.attributes.next.needsUpdate = true
 
       ref.current.material.uniforms.uDisplay.value = 1
+
+      setMousePoints(true)
     }
 
     if (loaded) updatePoints(mouse)
+
+    mouseLast.set(mouse.x, mouse.y, 0)
   })
 
   const updatePoints = (mouse) => {

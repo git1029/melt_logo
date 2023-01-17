@@ -1,39 +1,3 @@
-// uniform sampler2D envMap;
-//   uniform vec2 resolution;
-//   uniform float refrationRatio;
-
-//   varying vec3 worldNormal;
-//   varying vec3 eyeVector;
-
-//   void main() {
-//     // // get screen coordinates
-//     // vec2 uv = gl_FragCoord.xy / resolution;
-
-//     // // float ior = 1.15;
-//     // float ior = 1. + (1.-refrationRatio);
-
-//     // vec3 normal = worldNormal;
-//     // vec3 ev = eyeVector;
-//     // normal.z *= -1.;
-//     // calculate refraction and add to the screen coordinates
-//     vec3 refracted = refract(ev, normal, 1.0/ior);
-//     uv *= vec2(resolution.x/resolution.y, 1.);
-//     uv += vec2(-0.5, 0.);
-//     // uv *= 0.25;
-//     // uv *= 0.3333;
-//     // uv += 0.3333;
-//     uv += refracted.xy;
-
-//     // sample the background texture
-//     vec2 vUv = uv;
-//     // vUv *= (1.0 / - ev.z);
-//     vUv = vUv * .3333 + vec2(0.333);
-//     vec4 tex = texture2D(envMap, vUv);
-
-//     // vec4 output = tex;
-//     gl_FragColor = vec4(tex.rgb + normal * 0., 1.0);
-//   }
-
 export default /* glsl */ `
   uniform sampler2D uScene;
   uniform sampler2D uLogo;

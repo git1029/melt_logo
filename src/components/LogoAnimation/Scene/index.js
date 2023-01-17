@@ -273,11 +273,8 @@ const Scene = () => {
       prev: { x: 0, y: 0, vector_length: 0 },
       current: { x: 0, y: 0, vector_length: 0 },
       smoothed_vector: 0,
-      smoothed_vector_array: [0, 0, 0, 0, 0],
-      inited: !1,
+      inited: false,
     }
-
-    // console.log(uniforms)
 
     target.texture.minFilter = THREE.LinearFilter
     target.texture.magFilter = THREE.LinearFilter
@@ -296,6 +293,16 @@ const Scene = () => {
       mesh.current.material.uniforms.uResolution.value.y = size.height
     }
 
+    if (cam.current && size.height < 1000) {
+      cam.current.position.z = THREE.MathUtils.mapLinear(
+        size.height,
+        1000,
+        0,
+        90,
+        50
+      )
+    }
+
     // cam2.aspect = viewport.width / viewport.height
     // cam2.updateProjectionMatrix()
   }, [viewport])
@@ -304,27 +311,21 @@ const Scene = () => {
   const mLast = new THREE.Vector2()
 
   const updateMouseMovement = () => {
-    if (0 == mouse.inited) {
-      // mouse.prev = mouse.current
-      // mouse.inited = !0
-    } else {
-      let a = {
-        x: 0.9 * mouse.prev.x + 0.1 * mouse.current.x,
-        y: 0.9 * mouse.prev.y + 0.1 * mouse.current.y,
-      }
-      a.vector_length =
-        0.05 * mouse.current.vector_length + 0.95 * mouse.prev.vector_length
-      mouse.smoothed_vector = a.vector_length
-      mouse.prev = a
+    let a = {
+      x: 0.9 * mouse.prev.x + 0.1 * mouse.current.x,
+      y: 0.9 * mouse.prev.y + 0.1 * mouse.current.y,
     }
+    a.vector_length =
+      0.05 * mouse.current.vector_length + 0.95 * mouse.prev.vector_length
+    mouse.smoothed_vector = a.vector_length
+    mouse.prev = a
   }
 
   useFrame((state, delta) => {
     if (!mouse.inited) {
       m.set(state.mouse.x, state.mouse.y)
       if (m.clone().sub(mLast).length() > 0.01) {
-        mouse.inited = 1
-        setMouseInited(true)
+        mouse.inited = true
       }
       mLast.set(state.mouse.x, state.mouse.y)
     } else {
@@ -335,10 +336,6 @@ const Scene = () => {
       const vector_length = m.length()
       mouse.current.vector_length =
         1 - Math.max(Math.min(2 * Math.sqrt(vector_length) - 1, 1), 0)
-
-      if (mouseInited) {
-        setMouseInited(false)
-      }
 
       updateMouseMovement()
     }
@@ -413,7 +410,7 @@ const Scene = () => {
         aspect={viewport.width / viewport.height}
         near={1}
         far={1000}
-        position={[0, 0, 100]}
+        position={[0, 0, 90]}
       />
 
       {/* mouse events don't fire within portal state (creates new state (?), so need to pass root state mouse values to portal) */}
@@ -428,7 +425,6 @@ const Scene = () => {
         scene,
         {
           mouse: three.mouse,
-          mouseInited,
         }
       )}
 
@@ -441,7 +437,7 @@ const Scene = () => {
           frustumCulled={true}
           position={[0, 0, 0]}
           geometry={geometry}
-          scale={[1, 1, 1].map((i) => i * 50)}
+          scale={[1, 1, 1].map((i) => i * 55)}
           ref={mesh}
         >
           <shaderMaterial
