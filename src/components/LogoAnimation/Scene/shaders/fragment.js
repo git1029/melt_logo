@@ -9,10 +9,11 @@ export default /* glsl */ `
   uniform float uDPR;
   uniform vec4 uResolution;
   // uniform vec3 uWave;
-  uniform vec3 uTransition;
+  uniform vec4 uTransition;
   // uniform vec2 uMouse;
   uniform float refractionRatio;
   // varying vec2 vUv;
+  uniform vec3 uColor;
 
   varying vec3 worldNormal;
   varying vec3 eyeVector;
@@ -36,6 +37,109 @@ export default /* glsl */ `
   vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
       return a + b*cos( 6.28318*(c*t+d) );
   }
+
+
+  // float getFadeTime(float fo) {
+  //   vec4 uFade = uTransition;
+
+  //   if (uFade.x == 0. && uFade.z == -10. && uFade.w == -10. || uFade.z == uFade.w) return 0.;
+
+  //   float fd = 3.;
+  //   float fs = uFade.z + fo * 0.;
+  //   float fe = fs + fd;
+  //   float ft = 0.;
+
+  //   // If show
+  //   // if (uFade.x == 0.) {
+  //     // handle show before hide complete
+ 
+  //     // is it less than 3 - show/hide not complete
+  //     if ((uFade.z - uFade.w) < fd) {
+
+  //       float ts = (uFade.z - uFade.w) / fd;
+  //       if (uFade.x == 0.) {
+  //         float ts0 = uFade.y + ts;
+  //         float fd0 = ts0 * fd;
+  //         if (uTime < fs) ft = ts0;
+  //         else if (uTime < fs + fd0) ft = map(uTime, fs, fs + fd0, ts0, 0.);
+  //         else ft = 0.;
+  //       } else {
+  //         float ts0 = uFade.y - ts;
+  //         float fd0 = (1.-ts0) * fd;
+  //         if (uTime < fs) ft = ts0;
+  //         else if (uTime < fs + fd0) ft = map(uTime, fs, fs + fd0, ts0, 1.);
+  //         else ft = 1.;
+  //       }
+
+  //       // get completion
+  //       // float ts = (uFade.z - uFade.w) / fd;
+  //       // if (uFade.y < fd) ts = (uFade.y) / fd;
+  //       // // if (uFade.x == 1.) ts = 1. - ts;
+  //       // // float ts = map(uFade.z, uFade.w, uFade.w + fd, 0., 1.);
+  //       // // float ts = uFade.y / 3.;
+
+  //       // if (uFade.x == 0.) {
+  //       //   // was being hidden now shown
+  //       //   // was going from 0 to 1 ended up at ts
+  //       //   // now go from ts back to 0
+  //       //   // fe = fs + fd * ts;
+  //       //   // fe = fs + fd * ts;
+  //       //   // adjust duration/end point
+  //       //   fe = fs + fd * ts;
+  //       //   if (uTime < fs) ft = ts;
+  //       //   else if (uTime < fe) ft = map(uTime, fs, fe, ts, 0.);
+  //       //   else ft = 0.;
+  //       // }
+  //       // else {
+  //       //   // was being shown now hidden
+  //       //   // was going from 1 to 0 ended up at 1 - ts
+  //       //   // now go from 1 - ts to back to 1
+  //       //   fe = fs + fd * ts;
+  //       //   if (uTime < fs) ft = 0.;
+  //       //   else if (uTime < fe) ft = map(uTime, fs, fe, 0., ts);
+  //       //   else ft = ts;
+
+  //       //   // ft = 1. - ft;
+  //       // }
+
+  //     // ft = 0.;
+
+
+
+  //       // if (uFade.x == 1.) ft = ts - ft;
+
+
+  //       // if (uFade.x == 1.) ft = ts - ft;
+
+  //       // if (uFade.x == 0.) ft = 1. - ft;
+
+  //       // float ts = 1.-map(uFade.y, uFade.z, uFade.z + fd, 0., 1.);
+  //       // if (uTime < fs) ft = ts;
+  //       // else if (uTime < fe) ft = map(uTime, fs, fe, ts, 1.);
+  //       // else ft = 1.;
+
+  //     } else {
+  //       // ft = 0.;
+
+  //       fe = fs + fd;
+  //       if (uTime < fs) ft = 0.;
+  //       else if (uTime < fe) ft = map(uTime, fs, fe, 0., 1.);
+  //       else ft = 1.;
+  //       if (uFade.x == 0.) ft = 1. - ft;
+  //     }
+  //   // } 
+  //   // // else if hide
+  //   // else {
+  //   //   if (uTime < fs) ft = 0.;
+  //   //   else if (uTime < fe) ft = map(uTime, fs, fe, 0., 1.);
+  //   //   else ft = 1.;
+  //   // }
+
+
+  //   // ft = cubicInOut(ft);
+
+  //   return ft;
+  // }
 
   void main() {
     vec2 uv = gl_FragCoord.xy / uResolution.xy;
@@ -73,6 +177,11 @@ export default /* glsl */ `
     }
     
 
+    float fo = (1.-uv.y) * .5 * .5 + (1.-sin(uv.x * PI)) * 4.;
+    fo *= 0.25 * 0.;
+    // float ft = getFadeTime(fo);
+    float ft = cubicInOut(uTransition.y);
+
 
     float kernel = 10.0;
     // kernel = 20.0;
@@ -89,15 +198,26 @@ export default /* glsl */ `
     // float ior = 1. + (1.-refractionRatio) * iorF;
     // float ior = 1. + (1.-refractionRatio) * min(1., uResolution.x/uResolution.z);
     vec3 refracted = refract(ev, normal, 1.0/ior);
+    refracted.xy /= vec2(uResolution.x/uResolution.y, 1.); 
+    
+    refracted.xy *= 1.-ft;
+
+    // if (uTransition.x == 1.) {
+    //   refracted.xy *= 1.-ft;
+    // }
+    
+    
     // uv *= vec2(uResolution.x/uResolution.y, 1.);
     // uv += vec2(-0.5, 0.);
 
-    uv += refracted.xy / vec2(uResolution.x/uResolution.y, 1.);
+    uv += refracted.xy;
 
     float uvScl = 0.75;
     uv *= uvScl;
     uv += (1.-uvScl)/2.;
     uv = uv * imgScale - imgOff;
+
+
     vec2 vUv3 = uv;
 
     // vUv3 += (1.-dprScl)/2.;
@@ -122,6 +242,14 @@ export default /* glsl */ `
     float alpha = texture2D(uScene, uv_).a;
     // vec4 c = texture2D(uScene, vUv);
 
+    // if (uTransition.x == 1.) {
+    //   c *= 1.-ft;
+    //   alpha *= 1.-ft;
+    // }
+
+      c *= 1.-ft;
+      alpha *= 1.-ft;
+
     float x = c.r * 2. - 1.;
     float y = c.g * 2. - 1.;
     float strength = map(uDisp.x, 0., 1., 0., 0.3);
@@ -133,7 +261,8 @@ export default /* glsl */ `
     // float noise = .02;
     // off += rand(off) * noise * c.a * c.b; // 0.01
     // NOISE seems to go funny at very high uTime - fix by resetting or removing uTime
-    off += rand(vUv3 + uTime * 0.001) * noise * c.a * c.b; // 0.01 // so as not linked to off/strength
+    float r = rand(vUv3 + uTime * 0.001);
+    off += r * noise * c.a * c.b; // 0.01 // so as not linked to off/strength
 
 
     // vec2 vUv2 = vUv3 * 2. - 1.;
@@ -181,28 +310,36 @@ export default /* glsl */ `
     //   cOff2.y = et * 0.1 * rand(off) * 0.1;
     // }
 
-    vec3 uFade = uTransition;
-    float fade = 1.-uFade.x;
-    float fs = uFade.y;
-    float fd = 3.;
+    // vec3 uFade = uTransition;
+    // float fade = 1.-uFade.x;
+    // float fs = uFade.y;
+    // float fd = 3.;
 
-    float ts = 0.;
-    if (uFade.y != uFade.z && (uFade.y - uFade.z) < fd) {
-      ts = 1.-map(uFade.y, uFade.z, uFade.z + fd, 0., 1.);
-    }
+    // float ts = 0.;
+    // if (uFade.y != uFade.z && (uFade.y - uFade.z) < fd) {
+    //   ts = 1.-map(uFade.y, uFade.z, uFade.z + fd, 0., 1.);
+    // }
 
-    float ft = ts;
-    float fo = (1.-uv.y) * .5 * .5 + (1.-sin(uv.x * PI)) * 4.;
-    fo *= 0.25;
-    if (uTime < fs + fo) ft = ts;
-    else if (uTime < fs + fd + fo) ft = map(uTime, fs + fo, fs + fd + fo, ts, 1.);
-    else ft = 1.;
-    if (fade == 0.) ft = 1. - ft;
-    ft = cubicInOut(ft);
-    ft = 0.;
+    // float fo = (1.-uv.y) * .5 * .5 + (1.-sin(uv.x * PI)) * 4.;
+    // fo *= 0.25 * 0.;
 
-    // off.y += -ft + rand(wave) * .005 * ft * 15.;
-    // cOff2.y = ft * 0.1 * rand(off) * 0.1;
+    // float ft = ts;
+    // if (uTime < fs + fo) ft = ts;
+    // else if (uTime < fs + fd + fo) ft = map(uTime, fs + fo, fs + fd + fo, ts, 1.);
+    // else ft = 1.;
+    // if (fade == 1.) ft = 1. - ft;
+    // ft = cubicInOut(ft);
+
+ 
+
+    // off.y += -ft * .5;
+    off.y += -ft * ((1.-cubicInOut(abs(uv.x * 2. -1.))) * 1. + .5) + r * .005 * ft * 15.;
+    cOff2.y = ft * r * .01;
+
+
+
+    // off.y += (-.5 + r * .01) * ft * uTransition.x;
+    // cOff2.y = ft * uTransition.x * 0.01 * r;
 
 
     // vec2 newUv = vUv * imgScale - imgOff;
@@ -234,7 +371,16 @@ export default /* glsl */ `
     // Do your cool postprocessing here
     // color.r += sin(vUv.x * 50.0);
     color += c * uShowMouse;
-    gl_FragColor = color + vec4(normal, 1.) *0.;
+    color += vec4(normal, 1.) *0.;
+
+    // color.r = max(color.r, uColor.r);
+    // color.g = max(color.g, uColor.g);
+    // color.b = max(color.b, uColor.b);
+
+    // color.rgb = max(color.rgb, uColor);
+    // color.rgb += vec3(0., 0., .2);
+
+    gl_FragColor = color;
     // gl_FragColor = texture2D(uLogo, vUv);
   }
 `

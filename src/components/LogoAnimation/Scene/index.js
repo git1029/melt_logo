@@ -1,18 +1,11 @@
-import { useState, useRef, useMemo, useLayoutEffect } from 'react'
+import { useState, useRef, useMemo, forwardRef } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree, createPortal, useLoader } from '@react-three/fiber'
-import {
-  // OrthographicCamera,
-  useFBO,
-  useTexture,
-  useScroll,
-  PerspectiveCamera,
-} from '@react-three/drei'
+import { useFBO, useTexture, PerspectiveCamera } from '@react-three/drei'
 
 import config from '../config.json'
 console.log(config)
 import { useControls, button } from 'leva'
-// import { Perf } from 'r3f-perf'
 
 import Trail from '../Trail'
 
@@ -25,18 +18,19 @@ import meltLogoFade from '../assets/textures/melt_logo_fade.png'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import warpedGlass from '../assets/models/warped_glass.obj'
 
+import { easeInOutCubic } from '../utils'
+
 // import Refraction from './Refraction'
 
 // https://eriksachse.medium.com/react-three-fiber-custom-postprocessing-render-target-solution-without-using-the-effectcomposer-d3a94e6ae3c3
 
-const Scene = () => {
+const Scene = forwardRef((props, ref) => {
   const cam = useRef()
   const mesh = useRef()
   const trail = useRef()
   // const scroll = useScroll()
   const group = useRef()
 
-  const [mouseInited, setMouseInited] = useState(false)
   const [logoConfig, setLogoConfig] = useState(config.logoSettings)
   const { displacement, refraction } = logoConfig
 
@@ -46,19 +40,8 @@ const Scene = () => {
   // }, [])
   // console.log(logoConfig)
 
-  useLayoutEffect(() => {
-    // three.gl.setPixelRatio(1)
-    console.log(three.gl)
-    console.log(three.gl.getSize(new THREE.Vector2()))
-    console.log(three.gl.getViewport(new THREE.Vector4()))
-    console.log(three.gl.getPixelRatio())
-    console.log(three.size)
-    console.log(three.viewport)
-    console.log(three.viewport.getCurrentViewport())
-  }, [])
-
   const three = useThree()
-  const { size, viewport, gl } = three
+  const { size, viewport } = three
 
   // gl.setViewport(0, 0, size.width * gl.dpr, size.height * gl.dpr)
 
@@ -262,11 +245,14 @@ const Scene = () => {
       uLogo: { value: logoTexture },
       uLogoC: { value: logoTextureC },
       uShowMouse: { value: showMouse },
-      uTransition: { value: new THREE.Vector3(0, 0, 0) },
+      uTransition: { value: new THREE.Vector4(0, 0, -10, -10) },
       PI: { value: Math.PI },
       uMouse: { value: new THREE.Vector2() },
       refractionRatio: { value: 1 },
       uDPR: { value: viewport.dpr },
+      // uColor: { value: new THREE.Color(0x00ff00) },
+      uColor: { value: new THREE.Color(0x1b884b) },
+      uFadeLast: { value: -10 },
     }
 
     // console.log(uniforms.uResolution)
@@ -341,6 +327,51 @@ const Scene = () => {
     mouse.prev = a
   }
 
+  const getFadeTime = () => {
+    const uFade = mesh.current.material.uniforms.uTransition.value
+    const uFadeLast = mesh.current.material.uniforms.uFadeLast.value
+    const uTime = mesh.current.material.uniforms.uTime.value
+
+    if (
+      (uFade.x == 0 && uFade.z == -10 && uFade.w == -10) ||
+      uFade.z == uFade.w
+    )
+      return 0
+
+    let fd = 3
+    let fs = uFade.z
+    let fe = fs + fd
+    let ft = 0
+
+    if (uFade.z - uFade.w < fd && uTime - uFade.z < fd) {
+      let ts0 = uFadeLast
+      if (uFade.x == 0) {
+        let fd0 = ts0 * fd
+        if (uTime < fs) ft = ts0
+        else if (uTime < fs + fd0)
+          ft = THREE.MathUtils.mapLinear(uTime, fs, fs + fd0, ts0, 0)
+        else ft = 0
+      } else {
+        let fd0 = (1 - ts0) * fd
+        if (uTime < fs) ft = ts0
+        else if (uTime < fs + fd0)
+          ft = THREE.MathUtils.mapLinear(uTime, fs, fs + fd0, ts0, 1)
+        else ft = 1
+      }
+    } else {
+      fe = fs + fd
+      if (uTime < fs) ft = 0
+      else if (uTime < fe) ft = THREE.MathUtils.mapLinear(uTime, fs, fe, 0, 1)
+      else ft = 1
+      if (uFade.x == 0) ft = 1 - ft
+      // ft = easeInOutCubic(ft)
+    }
+
+    // ft = easeInOutCubic(ft)
+
+    mesh.current.material.uniforms.uTransition.value.y = ft
+  }
+
   useFrame((state, delta) => {
     if (!mouse.inited) {
       m.set(state.mouse.x, state.mouse.y)
@@ -369,6 +400,7 @@ const Scene = () => {
     // mousePrev.y += dist.y * delta // 0.015
     // mesh.current.material.uniforms.uMouse.value = mousePrev
 
+    // Only update if change
     // if (
     //   (scroll.visible(0, 1 / 3) &&
     //     mesh.current.material.uniforms.uTransition.value.x === 0) ||
@@ -390,6 +422,7 @@ const Scene = () => {
     mesh.current.material.uniforms.uTime.value += delta
     trail.current.material.uniforms.uTime.value += delta
 
+    getFadeTime()
     // console.log(rotAngle)
 
     // if (rotAngle) {
@@ -461,6 +494,7 @@ const Scene = () => {
           ref={mesh}
         >
           <shaderMaterial
+            ref={ref}
             vertexShader={vertexPass}
             fragmentShader={fragmentPass}
             uniforms={uniforms}
@@ -469,6 +503,6 @@ const Scene = () => {
       </group>
     </>
   )
-}
+})
 
 export default Scene

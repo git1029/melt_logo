@@ -38,11 +38,21 @@ const LogoAnimation = (props) => {
   return (
     <>
       <Leva hidden={!controls} />
-      <div style={{ width: '100%', height: '100vh', maxHeight: '1000px' }}>
+      {/* <div style={{ width: '100%', height: '100vh', maxHeight: '1000px' }}> */}
+      <div
+        style={{
+          width: '100%',
+          height: '100vh',
+          maxHeight: '1000px',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
         <Canvas dpr={[1, 2]} gl={glSettings} onCreated={created}>
           {/* <Canvas gl={glSettings} onCreated={created}> */}
           <PerfMonitor visible={controls} />
-          <Scene />
+          <Scene ref={props.effectRef} />
         </Canvas>
       </div>
     </>

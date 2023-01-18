@@ -99,7 +99,9 @@ const Trail = forwardRef(({ radius, decay }, ref) => {
 
     if (loaded) updatePoints(mouse)
 
-    mouseLast.set(mouse.x, mouse.y, 0)
+    if (!mousePoints) mouseLast.set(mouse.x, mouse.y, 0)
+
+    // console.log('is rendering')
   })
 
   const updatePoints = (mouse) => {
