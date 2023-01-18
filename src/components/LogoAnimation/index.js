@@ -14,7 +14,7 @@ const PerfMonitor = ({ visible }) => {
 }
 
 const glSettings = {
-  // antialias: false,
+  antialias: false,
 }
 
 const created = ({ gl, size, viewport, camera }) => {
