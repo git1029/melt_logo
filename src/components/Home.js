@@ -6,7 +6,7 @@ const Home = (props) => {
   const fadeInRef = useRef(null)
   const fadeInTriggerRef = useRef(null)
   const effectRef = useRef(null)
-  const [backgroundColor, setBackgroundColor] = useState('#002233')
+  const [backgroundColor, setBackgroundColor] = useState('#000000')
   const [backgroundImage, setBackgroundImage] = useState('none')
 
   const updateEffect = (stage) => {
@@ -88,7 +88,7 @@ const Home = (props) => {
           position: 'relative',
           top: '50vh',
           height: '20px',
-          backgroundColor: '#0000ff',
+          // backgroundColor: '#0000ff',
         }}
         ref={fadeInTriggerRef}
         className="fadeInTrigger"
@@ -106,14 +106,19 @@ const Home = (props) => {
         style={{
           position: 'relative',
           top: '200px',
-          backgroundColor: '#00ff00',
+          // backgroundColor: '#00ff00',
           height: '20px',
         }}
         ref={fadeInRef}
         className="fadeIn"
       />
 
-      <div style={{ height: '100vh', backgroundColor: '#222222' }} />
+      <div
+        style={{
+          height: '100vh',
+          // backgroundColor: '#222222'
+        }}
+      />
     </div>
   )
 }
