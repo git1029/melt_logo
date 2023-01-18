@@ -4,6 +4,7 @@ export default /* glsl */ `
   // uniform float uStrokeWeight;
   uniform vec4 uInfo; // vec4(uCount, uStrokeWeight, uRadius, 0.)
   uniform float uDisplay;
+  uniform float uDPR;
 
   varying vec2 vUv;
   varying vec2 vDir;
@@ -54,7 +55,7 @@ export default /* glsl */ `
     vec3 pos = vec3(position.xy / aspect, 0.);
     pos = vec3(position.xy, 0.);
     vec4 current = vec4(pos, 1);
-    current.xy -= normal * -side * uDisplay;
+    current.xy -= normal * -side * uDisplay * uDPR;
 
     vec4 p = current;
     p.z = map(index_, 0., uCount, 1., 0.) * -.5;
