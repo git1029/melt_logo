@@ -63,6 +63,7 @@ const Trail = forwardRef(({ radius, decay }, ref) => {
       resolution: { value: new THREE.Vector2(viewport.width, viewport.height) },
       uTime: { value: 0 },
       uDisplay: { value: 0 },
+      uDPR: { value: viewport.dpr },
     }
 
     return [points, position, next, prev, info, index, uniforms]
