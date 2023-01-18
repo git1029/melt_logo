@@ -1,0 +1,3 @@
+div[class^='leva'] {
+  cursor: default !important;
+}

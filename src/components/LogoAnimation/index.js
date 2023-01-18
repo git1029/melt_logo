@@ -4,6 +4,7 @@ import { Canvas } from '@react-three/fiber'
 import { Leva } from 'leva'
 import { Perf } from 'r3f-perf'
 import Scene from './Scene'
+import './LogoAnimation.css'
 
 const PerfMonitor = ({ visible }) => {
   if (!visible) {

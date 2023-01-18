@@ -55,7 +55,7 @@ export default /* glsl */ `
     vec3 pos = vec3(position.xy / aspect, 0.);
     pos = vec3(position.xy, 0.);
     vec4 current = vec4(pos, 1);
-    current.xy -= normal * -side * uDisplay * uDPR;
+    current.xy -= normal * -side * uDisplay;
 
     vec4 p = current;
     p.z = map(index_, 0., uCount, 1., 0.) * -.5;

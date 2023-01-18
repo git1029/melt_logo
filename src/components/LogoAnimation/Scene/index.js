@@ -98,9 +98,8 @@ const Scene = forwardRef((props, ref) => {
     },
   })
 
-  const { refractionRatio, mouseSpeed, rotAngle, rotSpeed } = useControls(
-    'refraction',
-    {
+  const { refractionRatio, mouseSpeed, mouseArea, rotAngle, rotSpeed } =
+    useControls('refraction', {
       refractionRatio: {
         value: refraction.refractionRatio,
         min: 0,
@@ -120,6 +119,12 @@ const Scene = forwardRef((props, ref) => {
           data.i = 0.1 * v
           // mesh.current.material.uniforms.uDisp.value.x = v
         },
+      },
+      mouseArea: {
+        value: refraction.mouseArea,
+        min: 0,
+        max: 1,
+        step: 0.1,
       },
       // zoom: {
       //   value: refraction.zoom,
@@ -148,8 +153,7 @@ const Scene = forwardRef((props, ref) => {
         //   // mesh.current.material.uniforms.uDisp.value.x = v
         // },
       },
-    }
-  )
+    })
 
   // const { waveEnabled, frequency, amplitude } = useControls('wave effect', {
   //   waveEnabled: {
@@ -190,12 +194,18 @@ const Scene = forwardRef((props, ref) => {
   //   }),
   // })
 
-  const { showMouse } = useControls('debug', {
+  const { showMouse, showCursor } = useControls('debug', {
     // perfVisible: true,
     showMouse: {
       value: false,
       onChange: (v) => {
         mesh.current.material.uniforms.uShowMouse.value = v
+      },
+    },
+    showCursor: {
+      value: true,
+      onChange: (v) => {
+        document.body.style.cursor = v ? 'default' : 'none'
       },
     },
   })
@@ -387,6 +397,20 @@ const Scene = forwardRef((props, ref) => {
       const vector_length = m.length()
       mouse.current.vector_length =
         1 - Math.max(Math.min(2 * Math.sqrt(vector_length) - 1, 1), 0)
+
+      if (
+        mouse.current.vector_length < THREE.MathUtils.clamp(mouseArea, 0, 0.99)
+      ) {
+        mouse.current.vector_length = 0
+      } else {
+        mouse.current.vector_length = THREE.MathUtils.mapLinear(
+          mouse.current.vector_length,
+          THREE.MathUtils.clamp(mouseArea, 0, 0.99),
+          1,
+          0,
+          1
+        )
+      }
 
       updateMouseMovement()
     }

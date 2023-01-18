@@ -13,6 +13,7 @@
       "zoom": 152,
       "refractionRatio": 17,
       "mouseSpeed": 20,
+      "mouseArea": 0.1,
       "rotAngle": {
         "x": 90,
         "y": 50,
