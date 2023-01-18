@@ -95,7 +95,7 @@ const Home = (props) => {
       />
       <div className="logo_knockout__holder fade-in-up-element">
         <div className="shrinker">
-          <LogoAnimation effectRef={effectRef} />
+          <LogoAnimation effectRef={effectRef} controls />
         </div>
       </div>
 

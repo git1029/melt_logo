@@ -34,6 +34,7 @@ const created = ({ gl, size, viewport, camera }) => {
 
 const LogoAnimation = (props) => {
   const controls = props.controls === undefined ? false : props.controls
+  // console.log(controls)
 
   return (
     <>
