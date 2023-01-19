@@ -119,6 +119,7 @@ const App = () => {
     "lineSpeed": 1,
     "lineWidth": 0.5,
     "lineDistortion": 0.5,
+    "lineColor": "#ffffff",
     "colorShift": 0.5,
     "imageStrength": 0.5,
     "mouseEnabled": true,

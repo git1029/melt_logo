@@ -40,131 +40,142 @@ const Scene = forwardRef((props, ref) => {
   const store = levaStore.useStore()
 
   const { mouseArea, rotAngle, rotSpeed } = useControls({
-    displacement: folder({
-      displacementStrength: {
-        label: 'strength',
-        value: config.displacementStrength,
-        min: 0,
-        max: 1,
-        step: 0.1,
-        onChange: (v, path, { initial }) => {
-          mesh.current.material.uniforms.uDisp.value.x = v
+    displacement: folder(
+      {
+        displacementStrength: {
+          label: 'strength',
+          value: config.displacementStrength,
+          min: 0,
+          max: 1,
+          step: 0.1,
+          onChange: (v, path, { initial }) => {
+            mesh.current.material.uniforms.uDisp.value.x = v
+          },
+        },
+        displacementRadius: {
+          label: 'radius',
+          value: config.displacementRadius,
+          min: 0,
+          max: 1,
+          step: 0.1,
+          onChange: (v) => {
+            trail.current.material.uniforms.uInfo.value.z = v
+          },
+        },
+        displacementDecay: {
+          label: 'decay',
+          value: config.displacementDecay,
+          min: 0,
+          max: 1,
+          step: 0.1,
+          onChange: (v) => {
+            trail.current.material.uniforms.uInfo.value.w = v
+          },
+        },
+        colorNoise: {
+          label: 'noise',
+          value: config.colorNoise,
+          min: 0,
+          max: 2,
+          step: 0.1,
+          onChange: (v) => {
+            mesh.current.material.uniforms.uDisp.value.y = v
+          },
+        },
+        colorShift: {
+          label: 'col shift',
+          value: config.colorShift,
+          min: 0,
+          max: 2,
+          step: 0.1,
+          onChange: (v) => {
+            mesh.current.material.uniforms.uDisp.value.z = v
+          },
         },
       },
-      displacementRadius: {
-        label: 'radius',
-        value: config.displacementRadius,
-        min: 0,
-        max: 1,
-        step: 0.1,
-        onChange: (v) => {
-          trail.current.material.uniforms.uInfo.value.z = v
+      { order: 1 }
+    ),
+    refraction: folder(
+      {
+        refractionRatio: {
+          label: 'ratio',
+          value: config.refractionRatio,
+          min: 0,
+          max: 100,
+          step: 1,
+          onChange: (v) => {
+            data.maxRefractionRatio = 1 - v / 100
+          },
+        },
+        mouseSpeed: {
+          label: 'mouse speed',
+          value: config.mouseSpeed,
+          min: 0,
+          max: 100,
+          step: 1,
+          onChange: (v) => {
+            data.i = 0.1 * v
+          },
+        },
+        mouseArea: {
+          label: 'mouse area',
+          value: config.mouseArea,
+          min: 0,
+          max: 1,
+          step: 0.1,
+        },
+        rotAngle: {
+          label: 'rot angle',
+          value: config.rotAngle,
+          min: 0,
+          max: 360,
+          step: 1,
+        },
+        rotSpeed: {
+          label: 'rot speed',
+          value: config.rotSpeed,
+          min: -10,
+          max: 10,
+          step: 0.5,
         },
       },
-      displacementDecay: {
-        label: 'decay',
-        value: config.displacementDecay,
-        min: 0,
-        max: 1,
-        step: 0.1,
-        onChange: (v) => {
-          trail.current.material.uniforms.uInfo.value.w = v
+      { order: 2 }
+    ),
+    debug: folder(
+      {
+        showMouse: {
+          label: 'mouse trail',
+          value: false,
+          onChange: (v) => {
+            mesh.current.material.uniforms.uShowMouse.value = v
+          },
+          order: -2,
         },
-      },
-      colorNoise: {
-        label: 'noise',
-        value: config.colorNoise,
-        min: 0,
-        max: 2,
-        step: 0.1,
-        onChange: (v) => {
-          mesh.current.material.uniforms.uDisp.value.y = v
+        showCursor: {
+          label: 'cursor',
+          value: true,
+          onChange: (v) => {
+            document.body.style.cursor = v ? 'default' : 'none'
+          },
+          order: -1,
         },
-      },
-      colorShift: {
-        label: 'col shift',
-        value: config.colorShift,
-        min: 0,
-        max: 2,
-        step: 0.1,
-        onChange: (v) => {
-          mesh.current.material.uniforms.uDisp.value.z = v
-        },
-      },
-    }),
-    refraction: folder({
-      refractionRatio: {
-        label: 'ratio',
-        value: config.refractionRatio,
-        min: 0,
-        max: 100,
-        step: 1,
-        onChange: (v) => {
-          data.maxRefractionRatio = 1 - v / 100
-        },
-      },
-      mouseSpeed: {
-        label: 'mouse speed',
-        value: config.mouseSpeed,
-        min: 0,
-        max: 100,
-        step: 1,
-        onChange: (v) => {
-          data.i = 0.1 * v
-        },
-      },
-      mouseArea: {
-        label: 'mouse area',
-        value: config.mouseArea,
-        min: 0,
-        max: 1,
-        step: 0.1,
-      },
-      rotAngle: {
-        label: 'rot angle',
-        value: config.rotAngle,
-        min: 0,
-        max: 360,
-        step: 1,
-      },
-      rotSpeed: {
-        label: 'rot speed',
-        value: config.rotSpeed,
-        min: -10,
-        max: 10,
-        step: 0.5,
-      },
-    }),
-    debug: folder({
-      showMouse: {
-        label: 'mouse trail',
-        value: false,
-        onChange: (v) => {
-          mesh.current.material.uniforms.uShowMouse.value = v
-        },
-      },
-      showCursor: {
-        label: 'cursor',
-        value: true,
-        onChange: (v) => {
-          document.body.style.cursor = v ? 'default' : 'none'
-        },
-      },
-      'export settings': button(() => {
-        const data = store.data
-        const keys = Object.keys(data)
-        const newConfig = { ...config }
+        'export settings': button(() => {
+          const data = store.data
+          const keys = Object.keys(data)
+          const newConfig = { ...config }
 
-        keys.forEach((key) => {
-          const k = key.split('.').pop()
-          if (newConfig[k]) {
-            newConfig[k] = data[key].value
-          }
-        })
+          keys.forEach((key) => {
+            const k = key.split('.').pop()
+            if (newConfig[k]) {
+              newConfig[k] = data[key].value
+            }
+          })
 
-        downloadConfig(JSON.stringify({ config: newConfig }))
-      }),
-    }),
+          downloadConfig(JSON.stringify({ config: newConfig }))
+        }),
+      },
+      { order: 4 }
+    ),
   })
 
   const [logoTexture, logoTextureC] = useTexture([meltLogo, meltLogoFade])

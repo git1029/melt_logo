@@ -27,131 +27,143 @@ const Scene = () => {
     //   setConfig(data)
     // }
     // fetchConfig()
-    console.log('RENDER SCENE')
+    // console.log('RENDER SCENE')
   }, [])
 
   const store = levaStore.useStore()
 
   const { image, upload } = useControls({
-    lines: folder({
-      lineCount: {
-        label: 'count',
-        value: config.lineCount,
-        min: 1,
-        max: 50,
-        step: 1,
-        onChange: (v) => {
-          mesh.current.material.uniforms.uLine.value.x = v
+    lines: folder(
+      {
+        lineCount: {
+          label: 'count',
+          value: config.lineCount,
+          min: 1,
+          max: 50,
+          step: 1,
+          onChange: (v) => {
+            mesh.current.material.uniforms.uLine.value.x = v
+          },
+        },
+        lineSpeed: {
+          label: 'speed',
+          value: config.lineSpeed,
+          min: 0,
+          max: 3,
+          step: 0.1,
+          onChange: (v) => {
+            mesh.current.material.uniforms.uLine.value.y = v
+          },
+        },
+        lineWidth: {
+          label: 'width',
+          value: config.lineWidth,
+          min: 0,
+          max: 1,
+          step: 0.01,
+          onChange: (v) => {
+            mesh.current.material.uniforms.uLine.value.z = v
+          },
+        },
+        lineDistortion: {
+          label: 'distortion',
+          value: config.lineDistortion,
+          min: 0,
+          max: 1,
+          step: 0.01,
+          onChange: (v) => {
+            mesh.current.material.uniforms.uDistortion.value.y = v
+          },
+        },
+        lineColor: {
+          label: 'color',
+          value: config.lineColor,
+          onChange: (v) => {
+            mesh.current.material.uniforms.uColor.value = new THREE.Color(v)
+          },
+        },
+        colorShift: {
+          label: 'col shift',
+          value: config.colorShift,
+          min: 0,
+          max: 1,
+          step: 0.01,
+          onChange: (v) => {
+            mesh.current.material.uniforms.uLine.value.w = v
+          },
         },
       },
-      lineSpeed: {
-        label: 'speed',
-        value: config.lineSpeed,
-        min: 0,
-        max: 3,
-        step: 0.1,
-        onChange: (v) => {
-          mesh.current.material.uniforms.uLine.value.y = v
+      { order: 1 }
+    ),
+    mouse: folder(
+      {
+        mouseEnabled: {
+          label: 'enabled',
+          value: config.mouseEnabled,
+          onChange: (v) => {
+            mesh.current.material.uniforms.uDistortion.value.z = v
+          },
+        },
+        mouseStrength: {
+          label: 'strength',
+          value: config.mouseStrength,
+          min: 0,
+          max: 1,
+          step: 0.01,
+          onChange: (v) => {
+            mesh.current.material.uniforms.uDistortion.value.w = v
+          },
         },
       },
-      lineWidth: {
-        label: 'width',
-        value: config.lineWidth,
-        min: 0,
-        max: 1,
-        step: 0.01,
-        onChange: (v) => {
-          mesh.current.material.uniforms.uLine.value.z = v
+      { order: 2 }
+    ),
+    image: folder(
+      {
+        image: {
+          options: { smiley, melt: meltLogo },
+        },
+        upload: {
+          image: null,
+        },
+        imageStrength: {
+          label: 'strength',
+          value: config.imageStrength,
+          min: 0,
+          max: 1,
+          step: 0.01,
+          onChange: (v) => {
+            mesh.current.material.uniforms.uDistortion.value.x = v
+          },
         },
       },
-      lineDistortion: {
-        label: 'distortion',
-        value: config.lineDistortion,
-        min: 0,
-        max: 1,
-        step: 0.01,
-        onChange: (v) => {
-          mesh.current.material.uniforms.uDistortion.value.y = v
+      { order: 3 }
+    ),
+    debug: folder(
+      {
+        showCursor: {
+          label: 'cursor',
+          value: true,
+          onChange: (v) => {
+            document.body.style.cursor = v ? 'default' : 'none'
+          },
         },
-      },
-      lineColor: {
-        label: 'color',
-        value: config.lineColor,
-        onChange: (v) => {
-          console.log(v)
-          mesh.current.material.uniforms.uColor.value = new THREE.Color(v)
-        },
-      },
-      colorShift: {
-        label: 'col shift',
-        value: config.colorShift,
-        min: 0,
-        max: 1,
-        step: 0.01,
-        onChange: (v) => {
-          mesh.current.material.uniforms.uLine.value.w = v
-        },
-      },
-    }),
-    mouse: folder({
-      mouseEnabled: {
-        label: 'enabled',
-        value: config.mouseEnabled,
-        onChange: (v) => {
-          mesh.current.material.uniforms.uDistortion.value.z = v
-        },
-      },
-      mouseStrength: {
-        label: 'strength',
-        value: config.mouseStrength,
-        min: 0,
-        max: 1,
-        step: 0.01,
-        onChange: (v) => {
-          mesh.current.material.uniforms.uDistortion.value.w = v
-        },
-      },
-    }),
-    image: folder({
-      image: {
-        options: { smiley, melt: meltLogo },
-      },
-      upload: {
-        image: null,
-      },
-      imageStrength: {
-        value: config.imageStrength,
-        min: 0,
-        max: 1,
-        step: 0.01,
-        onChange: (v) => {
-          mesh.current.material.uniforms.uDistortion.value.x = v
-        },
-      },
-    }),
-    debug: folder({
-      showCursor: {
-        label: 'cursor',
-        value: true,
-        onChange: (v) => {
-          document.body.style.cursor = v ? 'default' : 'none'
-        },
-      },
-      'export settings': button(() => {
-        const data = store.data
-        const keys = Object.keys(data)
-        const newConfig = { ...config }
+        'export settings': button(() => {
+          const data = store.data
+          const keys = Object.keys(data)
+          const newConfig = { ...config }
 
-        keys.forEach((key) => {
-          const k = key.split('.').pop()
-          if (newConfig[k]) {
-            newConfig[k] = data[key].value
-          }
-        })
+          keys.forEach((key) => {
+            const k = key.split('.').pop()
+            if (newConfig[k]) {
+              newConfig[k] = data[key].value
+            }
+          })
 
-        downloadConfig(JSON.stringify({ config: newConfig }))
-      }),
-    }),
+          downloadConfig(JSON.stringify({ config: newConfig }))
+        }),
+      },
+      { order: 5 }
+    ),
   })
 
   const texture = useTexture(
