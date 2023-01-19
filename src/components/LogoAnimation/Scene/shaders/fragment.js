@@ -370,7 +370,7 @@ export default /* glsl */ `
     // vec4 color = texture2D(uLogo, vUv);
     // Do your cool postprocessing here
     // color.r += sin(vUv.x * 50.0);
-    color += c * uShowMouse;
+    color += c * float(uShowMouse);
     color += vec4(normal, 1.) *0.;
 
     // color.r = max(color.r, uColor.r);

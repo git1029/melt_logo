@@ -2,13 +2,14 @@ export default /* glsl */ `
   varying vec2 vUv;
 
   uniform sampler2D uImage;
-  // uniform vec3 uColor;
+  uniform vec3 uColor;
   uniform float uTime;
   uniform float PI;
   uniform vec4 uResolution;
   uniform vec4 uLine; // vec2(lineCount, lineSpeed, lineWidth, colorOff)
   uniform vec4 uDistortion; // vec2(strength, distortion, mouseEnabled, mouseStrength)
   uniform vec2 uMouse;
+  // uniform vec2 uDist;
 
   float rand(vec2 co){
     return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
@@ -179,6 +180,9 @@ float cnoise(vec2 P)
     float dy = m.y - uv.y;
     dy = map(dy, -mRadius, mRadius, 0., 1.);
     d *= dy * float(uDistortion.z) * uDistortion.w;
+    // float df = map(clamp(length(uDist), 0., 2.), 0., 2., 0.5, 1.);
+    // d *= df;
+    d *= 1. - (sin(uTime) * .5 + .5)  * .2;
     y += d;
 
 
@@ -222,11 +226,15 @@ float cnoise(vec2 P)
     // strength = mod(vUv.y * 30., 1.);
     vec3 color = vec3(strength);
 
+
     vec3 cg = palette(uTime*.0 + vUv.x * vUv.y * 1., vec3(.5), vec3(.5), vec3(1.), vec3(0., 0.33, 0.67));
     vec3 meltGreen = vec3(222., 250., 82.) / 255.;
     color = mix(color, color * mix(vec3(1.), cg, pow(fy,3.)), clamp(cf, 0., 1.));
     // color *= mix(vec3(1.), cg, 1.-fy);
     // color *= cg;
+    
+    color.rgb *= uColor;
+
 
     gl_FragColor = vec4(color, 1.);
   }

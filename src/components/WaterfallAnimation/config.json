@@ -1,18 +1,13 @@
 {
-  "waterfallSettings": {
-    "lines": {
-      "count": 20,
-      "speed": 1,
-      "width": 0.5,
-      "colorOff": 0.5,
-      "distortion": 0.5
-    },
-    "image": {
-      "strength": 0.5
-    },
-    "mouse": {
-      "enabled": true,
-      "strength": 1
-    }
+  "config": {
+    "lineCount": 20,
+    "lineSpeed": 1,
+    "lineWidth": 0.5,
+    "lineDistortion": 0.5,
+    "lineColor": "#ffffff",
+    "colorShift": 0.5,
+    "imageStrength": 0.5,
+    "mouseEnabled": true,
+    "mouseStrength": 1
   }
 }

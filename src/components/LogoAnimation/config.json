@@ -1,29 +1,22 @@
 {
-  "logoSettings": {
-    "displacement": {
-      "strength": 1,
-      "radius": 1,
-      "decay": 0.5,
-      "noise": 1,
-      "colorShift": 1,
-      "frequency": 1,
-      "amplitude": 0.2
+  "config": {
+    "displacementStrength": 1,
+    "displacementRadius": 1,
+    "displacementDecay": 0.5,
+    "colorNoise": 1,
+    "colorShift": 1,
+    "refractionRatio": 17,
+    "mouseSpeed": 20,
+    "mouseArea": 0.1,
+    "rotAngle": {
+      "x": 90,
+      "y": 50,
+      "z": 145
     },
-    "refraction": {
-      "zoom": 152,
-      "refractionRatio": 17,
-      "mouseSpeed": 20,
-      "mouseArea": 0.1,
-      "rotAngle": {
-        "x": 90,
-        "y": 50,
-        "z": 145
-      },
-      "rotSpeed": {
-        "x": -9,
-        "y": -3,
-        "z": 3
-      }
+    "rotSpeed": {
+      "x": -9,
+      "y": -3,
+      "z": 3
     }
   }
 }

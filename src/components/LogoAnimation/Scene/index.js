@@ -1,10 +1,11 @@
-import { useState, useRef, useMemo, forwardRef } from 'react'
+import { useEffect, useRef, useMemo, forwardRef } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree, createPortal, useLoader } from '@react-three/fiber'
 import { useFBO, useTexture, PerspectiveCamera } from '@react-three/drei'
+import { useControls, button, folder, levaStore } from 'leva'
 
-import config from '../config.json'
-import { useControls, button } from 'leva'
+import logoConfig from '../config.json'
+// import logoService from './services/logoService'
 
 import Trail from '../Trail'
 
@@ -17,6 +18,8 @@ import meltLogoFade from '../assets/textures/melt_logo_fade.png'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import warpedGlass from '../assets/models/warped_glass.obj'
 
+import { downloadConfig } from '../utils'
+
 // https://eriksachse.medium.com/react-three-fiber-custom-postprocessing-render-target-solution-without-using-the-effectcomposer-d3a94e6ae3c3
 
 const Scene = forwardRef((props, ref) => {
@@ -25,70 +28,74 @@ const Scene = forwardRef((props, ref) => {
   const trail = useRef()
   const group = useRef()
 
-  const [logoConfig, setLogoConfig] = useState(config.logoSettings)
-  const { displacement, refraction } = logoConfig
-
-  // useEffect(async () => {
-  //   const result = await service.getConfig()
-  //   setLogoConfig(result)
-  // }, [])
-  // console.log(logoConfig)
-
   const three = useThree()
   const { size, viewport } = three
 
-  const { strength, noise, colorShift } = useControls('mouse displacement', {
-    strength: {
-      value: displacement.strength,
-      min: 0,
-      max: 1,
-      step: 0.1,
-      onChange: (v) => {
-        mesh.current.material.uniforms.uDisp.value.x = v
-      },
-    },
-    radius: {
-      value: displacement.radius,
-      min: 0,
-      max: 1,
-      step: 0.1,
-      onChange: (v) => {
-        trail.current.material.uniforms.uInfo.value.z = v
-      },
-    },
-    decay: {
-      value: displacement.decay,
-      min: 0,
-      max: 1,
-      step: 0.1,
-      onChange: (v) => {
-        trail.current.material.uniforms.uInfo.value.w = v
-      },
-    },
-    noise: {
-      value: displacement.noise,
-      min: 0,
-      max: 2,
-      step: 0.1,
-      onChange: (v) => {
-        mesh.current.material.uniforms.uDisp.value.y = v
-      },
-    },
-    colorShift: {
-      value: displacement.colorShift,
-      min: 0,
-      max: 2,
-      step: 0.1,
-      onChange: (v) => {
-        mesh.current.material.uniforms.uDisp.value.z = v
-      },
-    },
-  })
+  const { config } = logoConfig
 
-  const { refractionRatio, mouseSpeed, mouseArea, rotAngle, rotSpeed } =
-    useControls('refraction', {
+  useEffect(() => {
+    // console.log('RENDER SCENE')
+  }, [])
+
+  const store = levaStore.useStore()
+
+  const { mouseArea, rotAngle, rotSpeed } = useControls({
+    displacement: folder({
+      displacementStrength: {
+        label: 'strength',
+        value: config.displacementStrength,
+        min: 0,
+        max: 1,
+        step: 0.1,
+        onChange: (v, path, { initial }) => {
+          mesh.current.material.uniforms.uDisp.value.x = v
+        },
+      },
+      displacementRadius: {
+        label: 'radius',
+        value: config.displacementRadius,
+        min: 0,
+        max: 1,
+        step: 0.1,
+        onChange: (v) => {
+          trail.current.material.uniforms.uInfo.value.z = v
+        },
+      },
+      displacementDecay: {
+        label: 'decay',
+        value: config.displacementDecay,
+        min: 0,
+        max: 1,
+        step: 0.1,
+        onChange: (v) => {
+          trail.current.material.uniforms.uInfo.value.w = v
+        },
+      },
+      colorNoise: {
+        label: 'noise',
+        value: config.colorNoise,
+        min: 0,
+        max: 2,
+        step: 0.1,
+        onChange: (v) => {
+          mesh.current.material.uniforms.uDisp.value.y = v
+        },
+      },
+      colorShift: {
+        label: 'col shift',
+        value: config.colorShift,
+        min: 0,
+        max: 2,
+        step: 0.1,
+        onChange: (v) => {
+          mesh.current.material.uniforms.uDisp.value.z = v
+        },
+      },
+    }),
+    refraction: folder({
       refractionRatio: {
-        value: refraction.refractionRatio,
+        label: 'ratio',
+        value: config.refractionRatio,
         min: 0,
         max: 100,
         step: 1,
@@ -97,7 +104,8 @@ const Scene = forwardRef((props, ref) => {
         },
       },
       mouseSpeed: {
-        value: refraction.mouseSpeed,
+        label: 'mouse speed',
+        value: config.mouseSpeed,
         min: 0,
         max: 100,
         step: 1,
@@ -106,51 +114,58 @@ const Scene = forwardRef((props, ref) => {
         },
       },
       mouseArea: {
-        value: refraction.mouseArea,
+        label: 'mouse area',
+        value: config.mouseArea,
         min: 0,
         max: 1,
         step: 0.1,
       },
       rotAngle: {
-        value: refraction.rotAngle,
+        label: 'rot angle',
+        value: config.rotAngle,
         min: 0,
         max: 360,
         step: 1,
       },
       rotSpeed: {
-        value: refraction.rotSpeed,
+        label: 'rot speed',
+        value: config.rotSpeed,
         min: -10,
         max: 10,
         step: 0.5,
       },
-    })
+    }),
+    debug: folder({
+      showMouse: {
+        label: 'mouse trail',
+        value: false,
+        onChange: (v) => {
+          mesh.current.material.uniforms.uShowMouse.value = v
+        },
+      },
+      showCursor: {
+        label: 'cursor',
+        value: true,
+        onChange: (v) => {
+          document.body.style.cursor = v ? 'default' : 'none'
+        },
+      },
+      'export settings': button(() => {
+        const data = store.data
+        const keys = Object.keys(data)
+        const newConfig = { ...config }
 
-  const { showMouse } = useControls('debug', {
-    showMouse: {
-      value: false,
-      onChange: (v) => {
-        mesh.current.material.uniforms.uShowMouse.value = v
-      },
-    },
-    showCursor: {
-      value: true,
-      onChange: (v) => {
-        document.body.style.cursor = v ? 'default' : 'none'
-      },
-    },
+        keys.forEach((key) => {
+          const k = key.split('.').pop()
+          if (newConfig[k]) {
+            newConfig[k] = data[key].value
+          }
+        })
+
+        downloadConfig(JSON.stringify({ config: newConfig }))
+      }),
+    }),
   })
-
-  // const [{ username, counter }, set] = useControls(() => ({
-  //   username: 'Mario',
-  //   counter: { value: 0, step: 1 },
-  // }))
-
-  // const { reset } = useControls({
-  //   // perfVisible: true,
-  //   reset: button(() => {
-  //     set({ counter: counter + 1 })
-  //   }),
-  // })
 
   const [logoTexture, logoTextureC] = useTexture([meltLogo, meltLogoFade])
   const glass = useLoader(OBJLoader, warpedGlass)
@@ -176,6 +191,14 @@ const Scene = forwardRef((props, ref) => {
   })
 
   const [scene, uniforms, camera, mouse, data] = useMemo(() => {
+    const {
+      displacementStrength,
+      colorNoise,
+      colorShift,
+      mouseSpeed,
+      refractionRatio,
+    } = config
+
     const scene = new THREE.Scene()
     // const scene2 = new THREE.Scene()
 
@@ -189,11 +212,13 @@ const Scene = forwardRef((props, ref) => {
           logoTexture.source.data.height
         ),
       },
-      uDisp: { value: new THREE.Vector3(strength, noise, colorShift) },
+      uDisp: {
+        value: new THREE.Vector3(displacementStrength, colorNoise, colorShift),
+      },
       uScene: { value: target.texture },
       uLogo: { value: logoTexture },
       uLogoC: { value: logoTextureC },
-      uShowMouse: { value: showMouse },
+      uShowMouse: { value: false },
       uTransition: { value: new THREE.Vector4(0, 0, -10, -10) },
       PI: { value: Math.PI },
       uMouse: { value: new THREE.Vector2() },
@@ -305,6 +330,8 @@ const Scene = forwardRef((props, ref) => {
   }
 
   useFrame((state, delta) => {
+    // const { mouseArea, rotAngle, rotSpeed } = config
+
     if (!mouse.inited) {
       m.set(state.mouse.x, state.mouse.y)
       if (m.clone().sub(mLast).length() > 0.01) {
@@ -356,6 +383,8 @@ const Scene = forwardRef((props, ref) => {
     //     state.clock.elapsedTime
     // }
 
+    // mesh.current.material.uniforms.uDisp.value.x = values.strength
+
     mesh.current.material.uniforms.uTime.value += delta
     trail.current.material.uniforms.uTime.value += delta
 
@@ -399,8 +428,8 @@ const Scene = forwardRef((props, ref) => {
       {/* https://codesandbox.io/s/kp1w5u?file=/src/App.js */}
       {createPortal(
         <Trail
-          radius={displacement.radius}
-          decay={displacement.decay}
+          radius={config.displacementRadius}
+          decay={config.displacementDecay}
           ref={trail}
         />,
         scene,

@@ -1,10 +1,10 @@
-import { useState, useRef, useMemo, useLayoutEffect } from 'react'
+import { useEffect, useRef, useMemo, useLayoutEffect } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
 import { OrthographicCamera, useTexture } from '@react-three/drei'
+import { useControls, button, folder, levaStore } from 'leva'
 
-import config from '../config.json'
-import { useControls } from 'leva'
+import waterfallConfig from '../config.json'
 
 import vertexShader from './shaders/vertex'
 import fragmentShader from './shaders/fragment'
@@ -12,20 +12,31 @@ import fragmentShader from './shaders/fragment'
 import meltLogo from '../assets/textures/melt_logo.png'
 import smiley from '../assets/textures/smiley.png'
 
+import { downloadConfig } from '../utils'
+
 const Scene = () => {
   const mesh = useRef()
 
-  const [waterfallConfig, setWaterfallConfig] = useState(
-    config.waterfallSettings
-  )
-
   const { gl, size, viewport } = useThree()
 
-  const { lineCount, lineSpeed, lineWidth, colorOff, distortion } = useControls(
-    'lines',
-    {
+  const { config } = waterfallConfig
+
+  useEffect(() => {
+    // const fetchConfig = async () => {
+    //   const data = await waterfallService.getConfig()
+    //   setConfig(data)
+    // }
+    // fetchConfig()
+    console.log('RENDER SCENE')
+  }, [])
+
+  const store = levaStore.useStore()
+
+  const { image, upload } = useControls({
+    lines: folder({
       lineCount: {
-        value: waterfallConfig.lines.count,
+        label: 'count',
+        value: config.lineCount,
         min: 1,
         max: 50,
         step: 1,
@@ -34,7 +45,8 @@ const Scene = () => {
         },
       },
       lineSpeed: {
-        value: waterfallConfig.lines.speed,
+        label: 'speed',
+        value: config.lineSpeed,
         min: 0,
         max: 3,
         step: 0.1,
@@ -43,7 +55,8 @@ const Scene = () => {
         },
       },
       lineWidth: {
-        value: waterfallConfig.lines.width,
+        label: 'width',
+        value: config.lineWidth,
         min: 0,
         max: 1,
         step: 0.01,
@@ -51,17 +64,9 @@ const Scene = () => {
           mesh.current.material.uniforms.uLine.value.z = v
         },
       },
-      colorOff: {
-        value: waterfallConfig.lines.colorOff,
-        min: 0,
-        max: 1,
-        step: 0.01,
-        onChange: (v) => {
-          mesh.current.material.uniforms.uLine.value.w = v
-        },
-      },
-      distortion: {
-        value: waterfallConfig.lines.distortion,
+      lineDistortion: {
+        label: 'distortion',
+        value: config.lineDistortion,
         min: 0,
         max: 1,
         step: 0.01,
@@ -69,43 +74,84 @@ const Scene = () => {
           mesh.current.material.uniforms.uDistortion.value.y = v
         },
       },
-    }
-  )
+      lineColor: {
+        label: 'color',
+        value: config.lineColor,
+        onChange: (v) => {
+          console.log(v)
+          mesh.current.material.uniforms.uColor.value = new THREE.Color(v)
+        },
+      },
+      colorShift: {
+        label: 'col shift',
+        value: config.colorShift,
+        min: 0,
+        max: 1,
+        step: 0.01,
+        onChange: (v) => {
+          mesh.current.material.uniforms.uLine.value.w = v
+        },
+      },
+    }),
+    mouse: folder({
+      mouseEnabled: {
+        label: 'enabled',
+        value: config.mouseEnabled,
+        onChange: (v) => {
+          mesh.current.material.uniforms.uDistortion.value.z = v
+        },
+      },
+      mouseStrength: {
+        label: 'strength',
+        value: config.mouseStrength,
+        min: 0,
+        max: 1,
+        step: 0.01,
+        onChange: (v) => {
+          mesh.current.material.uniforms.uDistortion.value.w = v
+        },
+      },
+    }),
+    image: folder({
+      image: {
+        options: { smiley, melt: meltLogo },
+      },
+      upload: {
+        image: null,
+      },
+      imageStrength: {
+        value: config.imageStrength,
+        min: 0,
+        max: 1,
+        step: 0.01,
+        onChange: (v) => {
+          mesh.current.material.uniforms.uDistortion.value.x = v
+        },
+      },
+    }),
+    debug: folder({
+      showCursor: {
+        label: 'cursor',
+        value: true,
+        onChange: (v) => {
+          document.body.style.cursor = v ? 'default' : 'none'
+        },
+      },
+      'export settings': button(() => {
+        const data = store.data
+        const keys = Object.keys(data)
+        const newConfig = { ...config }
 
-  const { mouseEnabled, mouseStrength } = useControls('mouse', {
-    mouseEnabled: {
-      value: waterfallConfig.mouse.enabled,
-      onChange: (v) => {
-        mesh.current.material.uniforms.uDistortion.value.z = v
-      },
-    },
-    mouseStrength: {
-      value: waterfallConfig.mouse.strength,
-      min: 0,
-      max: 1,
-      step: 0.01,
-      onChange: (v) => {
-        mesh.current.material.uniforms.uDistortion.value.w = v
-      },
-    },
-  })
+        keys.forEach((key) => {
+          const k = key.split('.').pop()
+          if (newConfig[k]) {
+            newConfig[k] = data[key].value
+          }
+        })
 
-  const { image, upload, strength } = useControls('image', {
-    image: {
-      options: { smiley, melt: meltLogo },
-    },
-    upload: {
-      image: null,
-    },
-    strength: {
-      value: waterfallConfig.image.strength,
-      min: 0,
-      max: 1,
-      step: 0.01,
-      onChange: (v) => {
-        mesh.current.material.uniforms.uDistortion.value.x = v
-      },
-    },
+        downloadConfig(JSON.stringify({ config: newConfig }))
+      }),
+    }),
   })
 
   const texture = useTexture(
@@ -165,11 +211,24 @@ const Scene = () => {
   }, [texture])
 
   const [uniforms, mouse] = useMemo(() => {
+    const {
+      lineCount,
+      lineSpeed,
+      lineWidth,
+      lineDistortion,
+      lineColor,
+      colorShift,
+      mouseEnabled,
+      mouseStrength,
+      imageStrength,
+    } = config
+
     const mouse = new THREE.Vector2()
+    // const distance = new THREE.Vector2()
 
     const uniforms = {
       uImage: { value: texture },
-      // uColor: { value: new THREE.Color(background) },
+      uColor: { value: new THREE.Color(lineColor) },
       uTime: { value: 0 },
       uResolution: {
         value: new THREE.Vector4(
@@ -181,17 +240,18 @@ const Scene = () => {
       },
       PI: { value: Math.PI },
       uLine: {
-        value: new THREE.Vector4(lineCount, lineSpeed, lineWidth, colorOff),
+        value: new THREE.Vector4(lineCount, lineSpeed, lineWidth, colorShift),
       },
       uDistortion: {
         value: new THREE.Vector4(
-          strength,
-          distortion,
+          imageStrength,
+          lineDistortion,
           mouseEnabled,
           mouseStrength
         ),
       },
-      uMouse: { value: new THREE.Vector2() },
+      uMouse: { value: mouse },
+      // uDist: { value: distance },
     }
 
     return [uniforms, mouse]
@@ -209,6 +269,9 @@ const Scene = () => {
   useFrame((state, delta) => {
     mesh.current.material.uniforms.uTime.value += delta
 
+    // distance.x = state.mouse.x - mouse.x
+    // distance.y = state.mouse.y - mouse.y
+
     mouse.x += (state.mouse.x - mouse.x) * delta * 5
     mouse.y += (state.mouse.y - mouse.y) * delta * 5
 
@@ -218,6 +281,11 @@ const Scene = () => {
       mouse.x,
       mouse.y
     )
+
+    // mesh.current.material.uniforms.uDist.value.set(
+    //   distance.x,
+    //   distance.y
+    // )
   })
 
   return (

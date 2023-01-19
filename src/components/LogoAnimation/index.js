@@ -1,5 +1,4 @@
-// import '../../css/components/LogoAnimation/LogoAnimation.css'
-
+import { useState, useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Leva } from 'leva'
 import { Perf } from 'r3f-perf'
@@ -7,40 +6,47 @@ import Scene from './Scene'
 import './LogoAnimation.css'
 
 const PerfMonitor = ({ visible }) => {
-  if (!visible) {
-    return null
-  }
-
-  return <Perf position="top-left" />
+  return (
+    <Perf
+      position="top-left"
+      className="r3f-perf"
+      style={{ visibility: visible ? 'visible' : 'hidden' }}
+    />
+  )
 }
 
 const glSettings = {
   antialias: false,
 }
 
-const created = ({ gl, size, viewport, camera }) => {
+const created = ({ gl }) => {
   console.log('Canvas ready')
   gl.domElement.id = 'logoAnimation'
-  // state.gl.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-
-  // console.log(viewport)
-  // // gl.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-  // gl.setSize(size.width, size.height)
-  // gl.setViewport(0, 0, size.width * viewport.dpr, size.height * viewport.dpr)
-  // console.log(viewport)
-
-  // state.gl.setPixelRatio(2)
-  // state.gl.setPixelRatio(1)
 }
 
 const LogoAnimation = (props) => {
+  const [toggleControls, setToggleControls] = useState(true)
+
   const controls = props.controls === undefined ? false : props.controls
-  // console.log(controls)
+
+  const handleControlToggle = (e) => {
+    if (e.key === 'd') {
+      if (document.activeElement !== document.body || !controls) return
+      setToggleControls(!toggleControls)
+    }
+  }
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleControlToggle)
+
+    return () => {
+      window.removeEventListener('keydown', handleControlToggle)
+    }
+  })
 
   return (
     <>
-      <Leva hidden={!controls} />
-      {/* <div style={{ width: '100%', height: '100vh', maxHeight: '1000px' }}> */}
+      <Leva hidden={!controls || !toggleControls} />
       <div
         style={{
           width: '100%',
@@ -52,8 +58,7 @@ const LogoAnimation = (props) => {
         }}
       >
         <Canvas dpr={[1, 2]} gl={glSettings} onCreated={created}>
-          {/* <Canvas gl={glSettings} onCreated={created}> */}
-          <PerfMonitor visible={controls} />
+          <PerfMonitor visible={controls && toggleControls} />
           <Scene ref={props.effectRef} />
         </Canvas>
       </div>

@@ -1,10 +1,87 @@
+## LogoAnimation
+
 ### Usage
 
 ```jsx
 import LogoAnimation from './components/LogoAnimation'
 
 const App = () => {
-  return <LogoAnimation controls />
+  return <LogoAnimation effectRef={effectRef} controls />
+}
+```
+
+### Props
+
+<table>
+  <tr>
+    <th valign="top">
+    Prop
+    </th>
+    <th valign="top">
+    Description 
+    </th>
+    <th valign="top">
+    Default 
+    </th>
+  </tr>
+  <tr>
+    <td valign="top">
+    controls
+    </td>
+    <td valign="top">
+    Toggles Leva control panel and perf-r3f metrics
+    </td>
+    <td valign="top"><code>true</code></td>
+  <tr>
+  <tr>
+    <td valign="top">
+    effectRef
+    </td>
+    <td valign="top">
+    react ref to pass scroll events for transition effect
+    </td>
+    <td valign="top"></td>
+  <tr>
+</table>
+
+### Config
+
+```json
+{
+  "config": {
+    "displacementStrength": 1,
+    "displacementRadius": 1,
+    "displacementDecay": 0.5,
+    "colorNoise": 1,
+    "colorShift": 1,
+    "refractionRatio": 17,
+    "mouseSpeed": 20,
+    "mouseArea": 0.1,
+    "rotAngle": {
+      "x": 90,
+      "y": 50,
+      "z": 145
+    },
+    "rotSpeed": {
+      "x": -9,
+      "y": -3,
+      "z": 3
+    }
+  }
+}
+```
+
+---
+
+## WaterfallAnimation
+
+### Usage
+
+```jsx
+import WaterfallAnimation from './components/WaterfallAnimation'
+
+const App = () => {
+  return <WaterfallAnimation controls />
 }
 ```
 
@@ -35,36 +112,22 @@ const App = () => {
 
 ### Config
 
-```js
+```json
 {
-  "logoSettings": {
-    "displacement": {
-      "strength": 1,
-      "radius": 1,
-      "decay": 0.5,
-      "noise": 1,
-      "colorShift": 1,
-      "frequency": 1,
-      "amplitude": 0.2
-    },
-    "refraction": {
-      "refractionRatio": 17,
-      "mouseSpeed": 20,
-      "rotAngle": {
-        "x": 90,
-        "y": 50,
-        "z": 145
-      },
-      "rotSpeed": {
-        "x": -9,
-        "y": -3,
-        "z": 3
-      }
-    }
+  "config": {
+    "lineCount": 20,
+    "lineSpeed": 1,
+    "lineWidth": 0.5,
+    "lineDistortion": 0.5,
+    "colorShift": 0.5,
+    "imageStrength": 0.5,
+    "mouseEnabled": true,
+    "mouseStrength": 1
   }
 }
-
 ```
+
+---
 
 ### Dependencies
 

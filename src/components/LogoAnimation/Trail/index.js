@@ -186,6 +186,7 @@ const Trail = forwardRef(({ radius, decay }, ref) => {
   }
 
   useEffect(() => {
+    // console.log('RENDER TRAIL')
     setLoaded(true)
   }, [])
 
