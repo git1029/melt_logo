@@ -4,7 +4,6 @@ import { useFrame, useThree, createPortal, useLoader } from '@react-three/fiber'
 import { useFBO, useTexture, PerspectiveCamera } from '@react-three/drei'
 
 import config from '../config.json'
-console.log(config)
 import { useControls, button } from 'leva'
 
 import Trail from '../Trail'
@@ -18,17 +17,12 @@ import meltLogoFade from '../assets/textures/melt_logo_fade.png'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import warpedGlass from '../assets/models/warped_glass.obj'
 
-import { easeInOutCubic } from '../utils'
-
-// import Refraction from './Refraction'
-
 // https://eriksachse.medium.com/react-three-fiber-custom-postprocessing-render-target-solution-without-using-the-effectcomposer-d3a94e6ae3c3
 
 const Scene = forwardRef((props, ref) => {
   const cam = useRef()
   const mesh = useRef()
   const trail = useRef()
-  // const scroll = useScroll()
   const group = useRef()
 
   const [logoConfig, setLogoConfig] = useState(config.logoSettings)
@@ -42,13 +36,6 @@ const Scene = forwardRef((props, ref) => {
 
   const three = useThree()
   const { size, viewport } = three
-
-  // gl.setViewport(0, 0, size.width * gl.dpr, size.height * gl.dpr)
-
-  // console.log(viewport)
-  // // gl.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-  // gl.setViewport(0, 0, size.width * viewport.dpr, size.height * viewport.dpr)
-  // console.log(viewport)
 
   const { strength, noise, colorShift } = useControls('mouse displacement', {
     strength: {
@@ -107,7 +94,6 @@ const Scene = forwardRef((props, ref) => {
         step: 1,
         onChange: (v) => {
           data.maxRefractionRatio = 1 - v / 100
-          //   // mesh.current.material.uniforms.uDisp.value.x = v
         },
       },
       mouseSpeed: {
@@ -117,7 +103,6 @@ const Scene = forwardRef((props, ref) => {
         step: 1,
         onChange: (v) => {
           data.i = 0.1 * v
-          // mesh.current.material.uniforms.uDisp.value.x = v
         },
       },
       mouseArea: {
@@ -126,76 +111,21 @@ const Scene = forwardRef((props, ref) => {
         max: 1,
         step: 0.1,
       },
-      // zoom: {
-      //   value: refraction.zoom,
-      //   min: 100,
-      //   max: 200,
-      //   step: 1,
-      //   onChange: (v) => {
-      //     // mesh.current.material.uniforms.uDisp.value.x = v
-      //   },
-      // },
       rotAngle: {
         value: refraction.rotAngle,
         min: 0,
         max: 360,
         step: 1,
-        // onChange: (v) => {
-        //   // mesh.current.material.uniforms.uDisp.value.x = v
-        // },
       },
       rotSpeed: {
         value: refraction.rotSpeed,
         min: -10,
         max: 10,
         step: 0.5,
-        // onChange: (v) => {
-        //   // mesh.current.material.uniforms.uDisp.value.x = v
-        // },
       },
     })
 
-  // const { waveEnabled, frequency, amplitude } = useControls('wave effect', {
-  //   waveEnabled: {
-  //     value: true,
-  //     onChange: (v) => {
-  //       mesh.current.material.uniforms.uWave.value.x = v
-  //     },
-  //   },
-  //   frequency: {
-  //     value: defaults.frequency,
-  //     min: 0.5,
-  //     max: 2,
-  //     step: 0.1,
-  //     onChange: (v) => {
-  //       mesh.current.material.uniforms.uWave.value.y = v
-  //     },
-  //   },
-  //   amplitude: {
-  //     value: defaults.amplitude,
-  //     min: 0,
-  //     max: 0.5,
-  //     step: 0.01,
-  //     onChange: (v) => {
-  //       mesh.current.material.uniforms.uWave.value.z = v
-  //     },
-  //   },
-  // })
-
-  // const [{ username, counter }, set] = useControls(() => ({
-  //   username: 'Mario',
-  //   counter: { value: 0, step: 1 },
-  // }))
-
-  // const { reset } = useControls({
-  //   // perfVisible: true,
-  //   reset: button(() => {
-  //     set({ counter: counter + 1 })
-  //   }),
-  // })
-
-  const { showMouse, showCursor } = useControls('debug', {
-    // perfVisible: true,
+  const { showMouse } = useControls('debug', {
     showMouse: {
       value: false,
       onChange: (v) => {
@@ -210,6 +140,19 @@ const Scene = forwardRef((props, ref) => {
     },
   })
 
+  // const [{ username, counter }, set] = useControls(() => ({
+  //   username: 'Mario',
+  //   counter: { value: 0, step: 1 },
+  // }))
+
+  // const { reset } = useControls({
+  //   // perfVisible: true,
+  //   reset: button(() => {
+  //     set({ counter: counter + 1 })
+  //   }),
+  // })
+
+  const [logoTexture, logoTextureC] = useTexture([meltLogo, meltLogoFade])
   const glass = useLoader(OBJLoader, warpedGlass)
   const geometry = glass.children[0].geometry
 
@@ -232,25 +175,21 @@ const Scene = forwardRef((props, ref) => {
     generateMipmaps: true,
   })
 
-  const [logoTexture, logoTextureC] = useTexture([meltLogo, meltLogoFade])
-
-  const [scene, scene2, uniforms, cam1, mouse, data] = useMemo(() => {
+  const [scene, uniforms, camera, mouse, data] = useMemo(() => {
     const scene = new THREE.Scene()
-    const scene2 = new THREE.Scene()
+    // const scene2 = new THREE.Scene()
+
     const uniforms = {
       uTime: { value: 0 },
       uResolution: {
         value: new THREE.Vector4(
-          // viewport.width,
-          // viewport.height,
-          size.width,
+          size.width, // size = px units, viewport = three.js units
           size.height,
           logoTexture.source.data.width,
           logoTexture.source.data.height
         ),
       },
       uDisp: { value: new THREE.Vector3(strength, noise, colorShift) },
-      // uWave: { value: new THREE.Vector3(waveEnabled, frequency, amplitude) },
       uScene: { value: target.texture },
       uLogo: { value: logoTexture },
       uLogoC: { value: logoTextureC },
@@ -265,18 +204,7 @@ const Scene = forwardRef((props, ref) => {
       uFadeLast: { value: -10 },
     }
 
-    // console.log(uniforms.uResolution)
-
     const data = {
-      // zoom: 152,
-      // refraction_ratio: 17, // 17
-      // mouse_speed: 20,
-      // rot_x: 90,
-      // rot_y: 50,
-      // rot_z: 145,
-      // rot_speed_x: -9,
-      // rot_speed_y: -3,
-      // rot_speed_z: 3,
       aspect: viewport.width / viewport.height,
       imgAspect: 1,
       a: 0,
@@ -294,11 +222,11 @@ const Scene = forwardRef((props, ref) => {
     target.texture.minFilter = THREE.LinearFilter
     target.texture.magFilter = THREE.LinearFilter
 
-    const cam1 = new THREE.OrthographicCamera(-1, 1, 1, -1, -100, 100)
-    cam1.zoom = 1
-    cam1.position.z = 0
+    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -100, 100)
+    camera.zoom = 1
+    camera.position.z = 0
 
-    return [scene, scene2, uniforms, cam1, mouse, data]
+    return [scene, uniforms, camera, mouse, data]
   }, [])
 
   // Update resolution uniform on viewport resize
@@ -318,9 +246,6 @@ const Scene = forwardRef((props, ref) => {
       )
       cam.current.updateProjectionMatrix()
     }
-
-    // cam2.aspect = viewport.width / viewport.height
-    // cam2.updateProjectionMatrix()
   }, [viewport])
 
   const m = new THREE.Vector2()
@@ -374,10 +299,7 @@ const Scene = forwardRef((props, ref) => {
       else if (uTime < fe) ft = THREE.MathUtils.mapLinear(uTime, fs, fe, 0, 1)
       else ft = 1
       if (uFade.x == 0) ft = 1 - ft
-      // ft = easeInOutCubic(ft)
     }
-
-    // ft = easeInOutCubic(ft)
 
     mesh.current.material.uniforms.uTransition.value.y = ft
   }
@@ -415,15 +337,6 @@ const Scene = forwardRef((props, ref) => {
       updateMouseMovement()
     }
 
-    // const dist = new THREE.Vector2(
-    //   state.mouse.x - mousePrev.x,
-    //   state.mouse.y - mousePrev.y
-    // )
-
-    // mousePrev.x += dist.x * delta // 0.015
-    // mousePrev.y += dist.y * delta // 0.015
-    // mesh.current.material.uniforms.uMouse.value = mousePrev
-
     // Only update if change
     // if (
     //   (scroll.visible(0, 1 / 3) &&
@@ -447,9 +360,7 @@ const Scene = forwardRef((props, ref) => {
     trail.current.material.uniforms.uTime.value += delta
 
     getFadeTime()
-    // console.log(rotAngle)
 
-    // if (rotAngle) {
     cam.current.position.x = mouse.prev.x * data.i * 0.3
     cam.current.position.y = -mouse.prev.y * data.i * 0.3
     group.current.rotation.x = -0.05 * mouse.prev.y * data.i
@@ -462,23 +373,16 @@ const Scene = forwardRef((props, ref) => {
       289e-6 * rotSpeed.z * data.a + 0.01745 * rotAngle.z
     mesh.current.material.uniforms.refractionRatio.value =
       1 - (1 - data.maxRefractionRatio) * mouse.smoothed_vector
-    // }
-
-    // console.log(mouse.smoothed_vector)
 
     data.a += delta * 60
 
     state.gl.setRenderTarget(target)
-    state.gl.render(scene, cam1)
+    state.gl.render(scene, camera)
     state.gl.setRenderTarget(null)
-
-    // console.log(data.a)
   })
 
   return (
     <>
-      {/* {perfVisible ? <Perf position="top-left" /> : null} */}
-
       <PerspectiveCamera
         ref={cam}
         makeDefault

@@ -1,0 +1,18 @@
+{
+  "waterfallSettings": {
+    "lines": {
+      "count": 20,
+      "speed": 1,
+      "width": 0.5,
+      "colorOff": 0.5,
+      "distortion": 0.5
+    },
+    "image": {
+      "strength": 0.5
+    },
+    "mouse": {
+      "enabled": true,
+      "strength": 1
+    }
+  }
+}

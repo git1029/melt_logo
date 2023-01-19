@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import LogoAnimation from './LogoAnimation'
 import '../css/Home.css'
 
-const Home = (props) => {
+const Home = () => {
   const fadeInRef = useRef(null)
   const fadeInTriggerRef = useRef(null)
   const effectRef = useRef(null)
@@ -33,10 +33,10 @@ const Home = (props) => {
     }, 1000)
 
     const observer = new IntersectionObserver((entries) => {
-      // When page intersecting with fadeIn (projects) hide canvas
       if (entries[0].isIntersecting) {
         document.querySelector('.fade-in-up-element').classList.add('no-more')
 
+        // Hide
         updateEffect(1)
       }
     })
@@ -46,28 +46,12 @@ const Home = (props) => {
 
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
-      // When page intersecting with fadeInTrigger (top bar) show canvas
       if (entries[0].isIntersecting) {
         document
           .querySelector('.fade-in-up-element')
           .classList.remove('no-more')
 
-        // if (effectRef.current) {
-        //   if (effectRef.current.uniforms.uTransition.value.x !== 0) {
-        //     const { uTransition, uTime, uFadeLast } = effectRef.current.uniforms
-        //     uFadeLast.value = uTransition.value.y
-        //     uTransition.value.x = 0
-        //     uTransition.value.w = uTransition.value.z
-        //     uTransition.value.z = uTime.value
-        //     // console.log(
-        //     //   'show',
-        //     //   uTransition.value,
-        //     //   uTransition.value.z - uTransition.value.w,
-        //     //   uFadeLast.value
-        //     // )
-        //   }
-        // }
-
+        // Show
         updateEffect(0)
       }
     })
@@ -88,7 +72,6 @@ const Home = (props) => {
           position: 'relative',
           top: '50vh',
           height: '20px',
-          // backgroundColor: '#0000ff',
         }}
         ref={fadeInTriggerRef}
         className="fadeInTrigger"
@@ -106,7 +89,6 @@ const Home = (props) => {
         style={{
           position: 'relative',
           top: '200px',
-          // backgroundColor: '#00ff00',
           height: '20px',
         }}
         ref={fadeInRef}
@@ -116,7 +98,6 @@ const Home = (props) => {
       <div
         style={{
           height: '100vh',
-          // backgroundColor: '#222222'
         }}
       />
     </div>

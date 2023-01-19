@@ -187,8 +187,6 @@ const Trail = forwardRef(({ radius, decay }, ref) => {
 
   useEffect(() => {
     setLoaded(true)
-
-    // document.querySelector('.loader').classList.remove('show')
   }, [])
 
   return (
