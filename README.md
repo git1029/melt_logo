@@ -26,7 +26,7 @@ const App = () => {
   </tr>
   <tr>
     <td valign="top">
-    controls
+    <code>controls</code>
     </td>
     <td valign="top">
     Toggles Leva control panel and perf-r3f metrics
@@ -35,7 +35,7 @@ const App = () => {
   <tr>
   <tr>
     <td valign="top">
-    effectRef
+    <code>effectRef</code>
     </td>
     <td valign="top">
     react ref to pass scroll events for transition effect
@@ -101,7 +101,7 @@ const App = () => {
   </tr>
   <tr>
     <td valign="top">
-    controls
+    <code>controls</code>
     </td>
     <td valign="top">
     Toggles Leva control panel and perf-r3f metrics

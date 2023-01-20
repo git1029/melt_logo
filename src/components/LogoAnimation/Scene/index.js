@@ -22,7 +22,7 @@ import { downloadConfig } from '../utils'
 
 // https://eriksachse.medium.com/react-three-fiber-custom-postprocessing-render-target-solution-without-using-the-effectcomposer-d3a94e6ae3c3
 
-const Scene = forwardRef((props, ref) => {
+const Scene = forwardRef((_props, ref) => {
   const cam = useRef()
   const mesh = useRef()
   const trail = useRef()
@@ -149,6 +149,22 @@ const Scene = forwardRef((props, ref) => {
           onChange: (v) => {
             mesh.current.material.uniforms.uShowMouse.value = v
           },
+          order: -4,
+        },
+        wireframe: {
+          label: 'wireframe',
+          value: false,
+          onChange: (v) => {
+            mesh.current.material.wireframe = v
+          },
+          order: -3,
+        },
+        showNormals: {
+          label: 'normals',
+          value: false,
+          onChange: (v) => {
+            mesh.current.material.uniforms.uNormal.value = v
+          },
           order: -2,
         },
         showCursor: {
@@ -186,9 +202,8 @@ const Scene = forwardRef((props, ref) => {
   // https://codesandbox.io/s/devto-2-3rv9rf?file=/src/App.js:1022-1068
   // https://dev.to/eriksachse/create-your-own-post-processing-shader-with-react-three-fiber-usefbo-and-dreis-shadermaterial-with-ease-1i6d
   // Create target to render trail to to send plane as texture
-  // Textures have max size of 2048x2048 in WebGL, therefore need to cap else won't render anything above this in some browsers (Firefox), plus to keep memory usage down, don't need 1-1 pixel quality for trail (tbc)
-  // To do: maybe force tex to closest POT size up to 1028, 128, 256, 512, 1028, etc.
-  // NB: WebGL2 supports non-PoT texture sizes
+  // Textures have max size of 2048x2048 in WebGL1, therefore need to cap else won't render anything above this in some older browsers, plus to keep memory usage down, don't need 1-1 pixel quality for trail (tbc)
+  // NB: WebGL2 supports non-PoT texture sizes - could check render capability
   const limit = 2048
   const targetSize = Math.min(
     limit,
@@ -198,7 +213,6 @@ const Scene = forwardRef((props, ref) => {
     multisample: false,
     stencilBuffer: false,
     depthBuffer: false,
-    generateMipmaps: true,
   })
 
   const [scene, uniforms, camera, mouse, data] = useMemo(() => {
@@ -211,7 +225,6 @@ const Scene = forwardRef((props, ref) => {
     } = config
 
     const scene = new THREE.Scene()
-    // const scene2 = new THREE.Scene()
 
     const uniforms = {
       uTime: { value: 0 },
@@ -230,12 +243,12 @@ const Scene = forwardRef((props, ref) => {
       uLogo: { value: logoTexture },
       uLogoC: { value: logoTextureC },
       uShowMouse: { value: false },
+      uNormal: { value: false },
       uTransition: { value: new THREE.Vector4(0, 0, -10, -10) },
       PI: { value: Math.PI },
       uMouse: { value: new THREE.Vector2() },
       refractionRatio: { value: 1 },
       uDPR: { value: viewport.dpr },
-      // uColor: { value: new THREE.Color(0x00ff00) },
       uColor: { value: new THREE.Color(0x1b884b) },
       uFadeLast: { value: -10 },
     }
@@ -249,23 +262,22 @@ const Scene = forwardRef((props, ref) => {
     }
 
     const mouse = {
-      prev: { x: 0, y: 0, vector_length: 0 },
-      current: { x: 0, y: 0, vector_length: 0 },
-      smoothed_vector: 0,
+      prev: { x: 0, y: 0, vectorLength: 0 },
+      current: { x: 0, y: 0, vectorLength: 0 },
+      smoothedVector: 0,
       inited: false,
     }
 
     target.texture.minFilter = THREE.LinearFilter
     target.texture.magFilter = THREE.LinearFilter
 
-    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -100, 100)
+    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1)
     camera.zoom = 1
     camera.position.z = 0
 
     return [scene, uniforms, camera, mouse, data]
   }, [])
 
-  // Update resolution uniform on viewport resize
   useMemo(() => {
     if (mesh.current && mesh.current.material) {
       mesh.current.material.uniforms.uResolution.value.x = size.width
@@ -292,9 +304,9 @@ const Scene = forwardRef((props, ref) => {
       x: 0.9 * mouse.prev.x + 0.1 * mouse.current.x,
       y: 0.9 * mouse.prev.y + 0.1 * mouse.current.y,
     }
-    a.vector_length =
-      0.05 * mouse.current.vector_length + 0.95 * mouse.prev.vector_length
-    mouse.smoothed_vector = a.vector_length
+    a.vectorLength =
+      0.05 * mouse.current.vectorLength + 0.95 * mouse.prev.vectorLength
+    mouse.smoothedVector = a.vectorLength
     mouse.prev = a
   }
 
@@ -341,8 +353,6 @@ const Scene = forwardRef((props, ref) => {
   }
 
   useFrame((state, delta) => {
-    // const { mouseArea, rotAngle, rotSpeed } = config
-
     if (!mouse.inited) {
       m.set(state.mouse.x, state.mouse.y)
       if (m.clone().sub(mLast).length() > 0.01) {
@@ -354,18 +364,19 @@ const Scene = forwardRef((props, ref) => {
       mouse.current.x = m.x
       mouse.current.y = m.y
 
-      const vector_length = m.length()
-      mouse.current.vector_length =
-        1 - Math.max(Math.min(2 * Math.sqrt(vector_length) - 1, 1), 0)
+      const vectorLength = m.length()
+      mouse.current.vectorLength =
+        1 - Math.max(Math.min(2 * Math.sqrt(vectorLength) - 1, 1), 0)
 
       if (
-        mouse.current.vector_length < THREE.MathUtils.clamp(mouseArea, 0, 0.99)
+        mouse.current.vectorLength <
+        THREE.MathUtils.clamp(1 - mouseArea, 0, 0.99)
       ) {
-        mouse.current.vector_length = 0
+        mouse.current.vectorLength = 0
       } else {
-        mouse.current.vector_length = THREE.MathUtils.mapLinear(
-          mouse.current.vector_length,
-          THREE.MathUtils.clamp(mouseArea, 0, 0.99),
+        mouse.current.vectorLength = THREE.MathUtils.mapLinear(
+          mouse.current.vectorLength,
+          THREE.MathUtils.clamp(1 - mouseArea, 0, 0.99),
           1,
           0,
           1
@@ -394,10 +405,7 @@ const Scene = forwardRef((props, ref) => {
     //     state.clock.elapsedTime
     // }
 
-    // mesh.current.material.uniforms.uDisp.value.x = values.strength
-
     mesh.current.material.uniforms.uTime.value += delta
-    trail.current.material.uniforms.uTime.value += delta
 
     getFadeTime()
 
@@ -412,11 +420,12 @@ const Scene = forwardRef((props, ref) => {
     mesh.current.rotation.z =
       289e-6 * rotSpeed.z * data.a + 0.01745 * rotAngle.z
     mesh.current.material.uniforms.refractionRatio.value =
-      1 - (1 - data.maxRefractionRatio) * mouse.smoothed_vector
+      1 - (1 - data.maxRefractionRatio) * mouse.smoothedVector
 
     data.a += delta * 60
 
     state.gl.setRenderTarget(target)
+    state.gl.clear()
     state.gl.render(scene, camera)
     state.gl.setRenderTarget(null)
   })
@@ -429,8 +438,8 @@ const Scene = forwardRef((props, ref) => {
         manual
         fov={20}
         aspect={viewport.width / viewport.height}
-        near={1}
-        far={1000}
+        near={50}
+        far={200}
         position={[0, 0, 90]}
       />
 
@@ -449,13 +458,8 @@ const Scene = forwardRef((props, ref) => {
         }
       )}
 
-      {/* {createPortal(<Refraction texture={logoTexture} camera={cam} />, scene2, {
-        mouse: three.mouse,
-      })} */}
-
       <group ref={group}>
         <mesh
-          frustumCulled={true}
           position={[0, 0, 0]}
           geometry={geometry}
           scale={[1, 1, 1].map((i) => i * 55)}
@@ -466,6 +470,8 @@ const Scene = forwardRef((props, ref) => {
             vertexShader={vertexPass}
             fragmentShader={fragmentPass}
             uniforms={uniforms}
+            side={THREE.FrontSide}
+            wireframe={true}
           />
         </mesh>
       </group>

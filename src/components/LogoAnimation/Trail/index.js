@@ -1,43 +1,74 @@
 import * as THREE from 'three'
-import { useRef, useMemo, useEffect, useState, forwardRef } from 'react'
-import { useFrame, useThree } from '@react-three/fiber'
+import { useMemo, useState, forwardRef, useEffect } from 'react'
+import { createPortal, useFrame, useThree } from '@react-three/fiber'
+import { useFBO } from '@react-three/drei'
+
+import positionsVertexShader from './shaders/positionsVertex.js'
+import positionsFragmentShader from './shaders/positionsFragment.js'
 import vertexShader from './shaders/vertex.js'
 import fragmentShader from './shaders/fragment.js'
-import * as MathUtils from 'three/src/math/MathUtils.js'
+
 import { easeInOutCubic } from '../utils.js'
 
-// https://tympanus.net/codrops/2019/09/24/crafting-stylised-mouse-trails-with-ogl/
-// https://stackoverflow.com/questions/50077508/three-js-indexed-buffergeometry-vs-instancedbuffergeometry
-
 const Trail = forwardRef(({ radius, decay }, ref) => {
-  const geometry = useRef()
-  const pointCount = 1000 / 1
-
-  const tmp = new THREE.Vector3()
+  const tmp = new THREE.Vector2()
 
   const { viewport } = useThree()
 
   const [loaded, setLoaded] = useState(false)
   const [mousePoints, setMousePoints] = useState(false)
 
-  const [points, position, next, prev, info, index, uniforms] = useMemo(() => {
+  const pointCount = 1000
+  const limit = 512
+  const size = Math.min(
+    limit,
+    THREE.MathUtils.ceilPowerOfTwo(Math.sqrt(pointCount))
+  )
+
+  const target = useFBO(size, size, {
+    minFilter: THREE.NearestFilter,
+    magFilter: THREE.NearestFilter,
+    format: THREE.RGBAFormat,
+    type: THREE.FloatType,
+    // multisample: false,
+    // stencilBuffer: false,
+    // depthBuffer: false,
+    // generateMipmaps: false,
+  })
+
+  const [
+    points,
+    position,
+    positionsTexture,
+    data,
+    index,
+    positionsUniforms,
+    trailUniforms,
+    scene,
+    camera,
+  ] = useMemo(() => {
     const points = []
-    const position = new Float32Array(pointCount * 3 * 2) // 2 vertices per point
-    const next = new Float32Array(pointCount * 3 * 2)
-    const prev = new Float32Array(pointCount * 3 * 2)
+    for (let i = 0; i < pointCount; i++) {
+      points.push(new THREE.Vector2(0, 0))
+    }
+
+    const data = new Float32Array(size * size * 4)
+    const position = new Float32Array(pointCount * 3 * 2)
     const index = new Uint16Array((pointCount - 1) * 3 * 2)
-    const info = new Float32Array(pointCount * 4 * 2)
 
     for (let i = 0; i < pointCount; i++) {
-      const v = i / (pointCount - 1)
-      info.set([0, v], i * 4 * 2)
-      info.set([1, v], i * 4 * 2 + 4)
+      points[i].toArray(data, i * 4)
+      data[i * 4 + 2] = i // index in datatexture
+      data[i * 4 + 3] = 0
 
-      info.set([-1], i * 4 * 2 + 2)
-      info.set([1], i * 4 * 2 + 2 + 4)
-
-      info.set([i], i * 4 * 2 + 3)
-      info.set([i], i * 4 * 2 + 3 + 4)
+      // Vertex shader will draw each vertice by order in position array
+      // Want to draw point closest to mouse last so it is drawn on top (using transparency means z pos is ignored)
+      // Therefore we draw position into array in reverse
+      let i3 = (pointCount - i - 1) * 3 * 2
+      position[i3 + 0] = position[i3 + 3] = (i % size) / size
+      position[i3 + 1] = position[i3 + 4] = i / size / size
+      position[i3 + 2] = -1
+      position[i3 + 5] = 1
 
       if (i === pointCount - 1) continue
       const ind = i * 2
@@ -45,155 +76,145 @@ const Trail = forwardRef(({ radius, decay }, ref) => {
       index.set([ind + 2, ind + 1, ind + 3], (ind + 1) * 3)
     }
 
-    for (let i = 0; i < pointCount; i++) {
-      points.push(new THREE.Vector3(0, 0, 0))
+    const positionsTexture = new THREE.DataTexture(
+      data,
+      size,
+      size,
+      THREE.RGBAFormat,
+      THREE.FloatType
+    )
+    positionsTexture.needsUpdate = true
+
+    const positionsUniforms = {
+      positions: { value: positionsTexture },
     }
 
-    points.forEach((p, i) => {
-      p.toArray(position, i * 3 * 2)
-      p.toArray(position, i * 3 * 2 + 3)
-      p.toArray(next, i * 3 * 2)
-      p.toArray(next, i * 3 * 2 + 3)
-      p.toArray(prev, i * 3 * 2)
-      p.toArray(prev, i * 3 * 2 + 3)
-    })
-
-    const uniforms = {
-      uInfo: { value: new THREE.Vector4(pointCount, 200, radius, decay) },
-      resolution: { value: new THREE.Vector2(viewport.width, viewport.height) },
+    const trailUniforms = {
+      positions: { value: null },
       uTime: { value: 0 },
+      uSize: { value: size },
+      uInfo: { value: new THREE.Vector4(pointCount, 200, radius, decay) },
       uDisplay: { value: 0 },
-      uDPR: { value: viewport.dpr },
+      resolution: {
+        value: new THREE.Vector2(viewport.width, viewport.height),
+      },
     }
 
-    return [points, position, next, prev, info, index, uniforms]
+    const scene = new THREE.Scene()
+    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1)
+
+    return [
+      points,
+      position,
+      positionsTexture,
+      data,
+      index,
+      positionsUniforms,
+      trailUniforms,
+      scene,
+      camera,
+    ]
   }, [])
 
-  const mouse = new THREE.Vector3()
-  const mouseLast = new THREE.Vector3()
-
-  useFrame((state, delta) => {
-    // https://github.com/pmndrs/react-three-fiber/discussions/941
-    mouse.set(state.mouse.x, state.mouse.y, 0)
-
-    if (!mousePoints && mouse.clone().sub(mouseLast).length() > 0.01) {
-      for (let i = 0; i < pointCount; i++) {
-        points[i].set(state.mouse.x, state.mouse.y, 0)
-      }
-      points.forEach((p, i) => {
-        p.toArray(position, i * 3 * 2)
-        p.toArray(position, i * 3 * 2 + 3)
-        p.toArray(next, i * 3 * 2)
-        p.toArray(next, i * 3 * 2 + 3)
-        p.toArray(prev, i * 3 * 2)
-        p.toArray(prev, i * 3 * 2 + 3)
-      })
-
-      geometry.current.attributes.position.needsUpdate = true
-      geometry.current.attributes.prev.needsUpdate = true
-      geometry.current.attributes.next.needsUpdate = true
-
-      ref.current.material.uniforms.uDisplay.value = 1
-
-      setMousePoints(true)
-    }
-
-    if (loaded) updatePoints(mouse)
-
-    if (!mousePoints) mouseLast.set(mouse.x, mouse.y, 0)
-
-    // console.log('is rendering')
-  })
-
-  const updatePoints = (mouse) => {
-    for (let j = 0; j < points.length / 100; j++) {
+  const updatePoints = (mouse, delta) => {
+    // TO DO: consistent update across diff FPS
+    for (let j = 0; j < pointCount / 100; j++) {
       for (let i = points.length - 1; i >= 0; i--) {
-        if (!i) {
+        if (i === 0) {
           tmp.copy(mouse).sub(points[i])
           points[i].add(tmp)
         } else {
           let t = i / points.length
           t = easeInOutCubic(t)
-          t = MathUtils.mapLinear(t, 0, 1, 0.5, 0.75)
-          // t = 0.75;
+          t = THREE.MathUtils.mapLinear(t, 0, 1, 0.5, 0.75)
           points[i].lerp(points[i - 1], t)
         }
       }
     }
 
-    let length = 0
-    for (let i = 0; i < points.length - 1; i++) {
-      const p = points[i]
-      const q = points[i + 1]
-      const v = new THREE.Vector2(q.x - p.x, q.y - p.y)
-      length += v.length()
+    // update position datatexture
+    for (let i = 0; i < pointCount; i++) {
+      points[i].toArray(data, i * 4)
+      data[i * 4 + 2] = i
+      data[i * 4 + 3] = 0
     }
+    positionsTexture.needsUpdate = true
 
-    // const threshold = 0.01;
-    // if (this.length >= threshold && this.static) {
-    //   this.static = false;
-    //   this.fadeStartLast = this.fadeStart;
-    //   this.fadeStart = clock.getElapsedTime();
-    // }
-    // if (this.length < threshold && !this.static) {
-    //   this.static = true;
-    //   this.fadeStartLast = this.fadeStart;
-    //   this.fadeStart = clock.getElapsedTime();
+    // Incorporate length to stop rendering maybe
+    // let length = 0
+    // for (let i = 0; i < points.length - 1; i++) {
+    //   const p = points[i]
+    //   const q = points[i + 1]
+    //   const v = new THREE.Vector2(q.x - p.x, q.y - p.y)
+    //   length += v.length()
     // }
 
-    if (length > 0.01) {
-      updateGeometry()
-    }
-  }
+    // // const threshold = 0.01;
+    // // if (this.length >= threshold && this.static) {
+    // //   this.static = false;
+    // //   this.fadeStartLast = this.fadeStart;
+    // //   this.fadeStart = clock.getElapsedTime();
+    // // }
+    // // if (this.length < threshold && !this.static) {
+    // //   this.static = true;
+    // //   this.fadeStartLast = this.fadeStart;
+    // //   this.fadeStart = clock.getElapsedTime();
+    // // }
 
-  const updateGeometry = () => {
-    for (let i = 0; i < points.length; i++) {
-      let p = points[points.length - i - 1]
-
-      p.toArray(position, i * 3 * 2)
-      p.toArray(position, i * 3 * 2 + 3)
-
-      if (!i) {
-        // If first point, calculate prev using the distance to 2nd point
-        tmp
-          .copy(p)
-          .sub(points[i + 1])
-          .add(p)
-        tmp.toArray(next, i * 3 * 2)
-        tmp.toArray(next, i * 3 * 2 + 3)
-      } else {
-        p.toArray(prev, (i - 1) * 3 * 2)
-        p.toArray(prev, (i - 1) * 3 * 2 + 3)
-      }
-
-      if (i === points.length - 1) {
-        // If last point, calculate next using distance to 2nd last point
-        tmp
-          .copy(p)
-          .sub(points[i - 1])
-          .add(p)
-        tmp.toArray(prev, i * 3 * 2)
-        tmp.toArray(prev, i * 3 * 2 + 3)
-      } else {
-        p.toArray(next, (i + 1) * 3 * 2)
-        p.toArray(next, (i + 1) * 3 * 2 + 3)
-      }
-    }
-
-    geometry.current.attributes.position.needsUpdate = true
-    geometry.current.attributes.prev.needsUpdate = true
-    geometry.current.attributes.next.needsUpdate = true
+    // if (length > 0.01) {
+    //   updateGeometry()
+    // }
   }
 
   useEffect(() => {
     // console.log('RENDER TRAIL')
     setLoaded(true)
-  }, [])
+  })
 
+  const mouse = new THREE.Vector2()
+  const mouseLast = new THREE.Vector2()
+
+  useFrame((state, delta) => {
+    // https://github.com/pmndrs/react-three-fiber/discussions/941
+    mouse.set(state.mouse.x, state.mouse.y)
+
+    if (!mousePoints && mouse.clone().sub(mouseLast).length() > 0.01) {
+      for (let i = 0; i < pointCount; i++) {
+        points[i].set(mouse.x, mouse.y, 0)
+      }
+
+      ref.current.material.uniforms.uDisplay.value = 1
+
+      setMousePoints(true) // shouldn't really mutate state in useFrame but this should only be run once
+    }
+
+    if (loaded) updatePoints(mouse, delta)
+
+    ref.current.material.uniforms.positions.value = target.texture
+    ref.current.material.uniforms.uTime.value = delta
+
+    if (!mousePoints) mouseLast.set(mouse.x, mouse.y)
+
+    state.gl.setRenderTarget(target)
+    state.gl.clear()
+    state.gl.render(scene, camera)
+  })
   return (
     <>
+      {createPortal(
+        <mesh>
+          <planeGeometry args={[2, 2]} />
+          <shaderMaterial
+            vertexShader={positionsVertexShader}
+            fragmentShader={positionsFragmentShader}
+            uniforms={positionsUniforms}
+          />
+        </mesh>,
+        scene
+      )}
+
       <mesh ref={ref}>
-        <bufferGeometry ref={geometry}>
+        <bufferGeometry>
           <bufferAttribute
             attach="index"
             count={index.length}
@@ -203,39 +224,20 @@ const Trail = forwardRef(({ radius, decay }, ref) => {
           <bufferAttribute
             attach="attributes-position"
             count={position.length / 3}
-            itemSize={3}
             array={position}
-            dynamic
-          />
-          <bufferAttribute
-            attach="attributes-next"
-            count={next.length / 3}
             itemSize={3}
-            array={next}
             dynamic
-          />
-          <bufferAttribute
-            attach="attributes-prev"
-            count={prev.length / 3}
-            itemSize={3}
-            array={prev}
-            dynamic
-          />
-          <bufferAttribute
-            attach="attributes-info"
-            count={info.length / 4}
-            itemSize={4}
-            array={info}
           />
         </bufferGeometry>
         <shaderMaterial
           vertexShader={vertexShader}
           fragmentShader={fragmentShader}
-          uniforms={uniforms}
+          uniforms={trailUniforms}
           transparent={true}
           depthWrite={false}
           precision="lowp"
           alphaTest={0}
+          // wireframe={true}
         />
       </mesh>
     </>

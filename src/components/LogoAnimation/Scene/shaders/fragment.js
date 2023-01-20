@@ -6,6 +6,7 @@ export default /* glsl */ `
   uniform float PI;
   uniform vec3 uDisp; // vec4(strength, noise, colorShift)
   uniform float uShowMouse;
+  uniform float uNormal;
   uniform float uDPR;
   uniform vec4 uResolution;
   // uniform vec3 uWave;
@@ -371,7 +372,7 @@ export default /* glsl */ `
     // Do your cool postprocessing here
     // color.r += sin(vUv.x * 50.0);
     color += c * float(uShowMouse);
-    color += vec4(normal, 1.) *0.;
+    color += vec4(normal, 1.) * float(uNormal);
 
     // color.r = max(color.r, uColor.r);
     // color.g = max(color.g, uColor.g);
@@ -380,6 +381,7 @@ export default /* glsl */ `
     // color.rgb = max(color.rgb, uColor);
     // color.rgb += vec3(0., 0., .2);
 
+    // c = texture2D(uScene, uv_);
     gl_FragColor = color;
     // gl_FragColor = texture2D(uLogo, vUv);
   }
