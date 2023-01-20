@@ -30,8 +30,9 @@ const WaterfallAnimation = (props) => {
   const controls = props.controls === undefined ? false : props.controls
 
   const handleControlToggle = (e) => {
-    if (e.key === 'd') {
-      if (document.activeElement !== document.body || !controls) return
+    if (!controls || document.activeElement !== document.body) return
+
+    if (e.key === 'd' || e.key === 'D') {
       setToggleControls(!toggleControls)
     }
   }

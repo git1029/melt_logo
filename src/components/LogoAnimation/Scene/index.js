@@ -13,12 +13,15 @@ import vertexPass from './shaders/vertex'
 import fragmentPass from './shaders/fragment'
 
 import meltLogo from '../assets/textures/melt_logo.png'
-import meltLogoFade from '../assets/textures/melt_logo_fade.png'
+// import meltLogoFade from '../assets/textures/melt_logo_fade.png'
 
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import warpedGlass from '../assets/models/warped_glass.obj'
 
 import { downloadConfig } from '../utils'
+
+import { HorizontalBlurShader } from 'three/examples/jsm/shaders/HorizontalBlurShader'
+import { VerticalBlurShader } from 'three/examples/jsm/shaders/VerticalBlurShader'
 
 // https://eriksachse.medium.com/react-three-fiber-custom-postprocessing-render-target-solution-without-using-the-effectcomposer-d3a94e6ae3c3
 
@@ -29,7 +32,7 @@ const Scene = forwardRef(({ fps }, ref) => {
   const group = useRef()
 
   const three = useThree()
-  const { size, viewport } = three
+  const { size, viewport, gl } = three
 
   const { config } = logoConfig
 
@@ -39,7 +42,15 @@ const Scene = forwardRef(({ fps }, ref) => {
 
   const store = levaStore.useStore()
 
-  const { mouseArea, rotAngle, rotSpeed } = useControls({
+  const { upload, mouseArea, rotAngle, rotSpeed } = useControls({
+    image: folder(
+      {
+        upload: {
+          image: null,
+        },
+      },
+      { order: -4 }
+    ),
     displacement: folder(
       {
         displacementStrength: {
@@ -93,7 +104,7 @@ const Scene = forwardRef(({ fps }, ref) => {
           },
         },
       },
-      { order: 1 }
+      { order: -3 }
     ),
     refraction: folder(
       {
@@ -139,7 +150,7 @@ const Scene = forwardRef(({ fps }, ref) => {
           step: 0.5,
         },
       },
-      { order: 2 }
+      { order: -2 }
     ),
     debug: folder(
       {
@@ -190,11 +201,14 @@ const Scene = forwardRef(({ fps }, ref) => {
           downloadConfig(JSON.stringify({ config: newConfig }))
         }),
       },
-      { order: 4 }
+      { order: -1 }
     ),
   })
 
-  const [logoTexture, logoTextureC] = useTexture([meltLogo, meltLogoFade])
+  // const [logoTexture, logoTextureC] = useTexture([meltLogo, meltLogoFade])
+  const texture = useTexture(
+    upload === undefined || upload === null ? meltLogo : upload
+  )
   const glass = useLoader(OBJLoader, warpedGlass)
   const geometry = glass.children[0].geometry
 
@@ -226,22 +240,24 @@ const Scene = forwardRef(({ fps }, ref) => {
 
     const scene = new THREE.Scene()
 
+    // console.log('texture', texture)
+
     const uniforms = {
       uTime: { value: 0 },
       uResolution: {
         value: new THREE.Vector4(
           size.width, // size = px units, viewport = three.js units
           size.height,
-          logoTexture.source.data.width,
-          logoTexture.source.data.height
+          texture.source.data.width,
+          texture.source.data.height
         ),
       },
       uDisp: {
         value: new THREE.Vector3(displacementStrength, colorNoise, colorShift),
       },
       uScene: { value: target.texture },
-      uLogo: { value: logoTexture },
-      uLogoC: { value: logoTextureC },
+      uLogo: { value: texture },
+      uLogoC: { value: null },
       uShowMouse: { value: false },
       uNormal: { value: false },
       uTransition: { value: new THREE.Vector4(0, 0, -10, -10) },
@@ -277,6 +293,85 @@ const Scene = forwardRef(({ fps }, ref) => {
 
     return [scene, uniforms, camera, mouse, data]
   }, [])
+
+  // Get blurred image for color effect
+  // Only run on load or if new image uploaded (debug mode only)
+  // On live site should be a pre-made texture uploaded
+  useMemo(() => {
+    // console.log(upload)
+    // console.log('Generating blur texture')
+
+    const blurTextureSize = 1028
+
+    // Test blur effect render
+    let renderTargetA = new THREE.WebGLRenderTarget(
+      blurTextureSize,
+      blurTextureSize,
+      {
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+        // format: THREE.RGBAFormat,
+        // encoding: THREE.sRGBEncoding,
+      }
+    )
+    let renderTargetB = new THREE.WebGLRenderTarget(
+      blurTextureSize,
+      blurTextureSize,
+      {
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+        // format: THREE.RGBAFormat,
+        // encoding: THREE.sRGBEncoding,
+      }
+    )
+    const cameraBlur = new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1)
+    const sceneBlurA = new THREE.Scene()
+    const sceneBlurB = new THREE.Scene()
+    const planeA = new THREE.Mesh(
+      new THREE.PlaneGeometry(2, 2),
+      new THREE.ShaderMaterial(HorizontalBlurShader)
+    )
+    const planeB = new THREE.Mesh(
+      new THREE.PlaneGeometry(2, 2),
+      new THREE.ShaderMaterial(VerticalBlurShader)
+    )
+    planeA.material.uniforms.h.value = 1 / blurTextureSize
+    planeB.material.uniforms.v.value = 1 / blurTextureSize
+
+    sceneBlurA.add(planeA)
+    sceneBlurA.add(cameraBlur)
+    sceneBlurB.add(planeB)
+    sceneBlurB.add(cameraBlur)
+
+    for (let i = 0; i < 20; i++) {
+      if (i === 0) planeA.material.uniforms.tDiffuse.value = texture
+      else planeA.material.uniforms.tDiffuse.value = renderTargetB.texture
+
+      gl.setRenderTarget(renderTargetA)
+      gl.clear()
+      gl.render(sceneBlurA, cameraBlur)
+
+      planeB.material.uniforms.tDiffuse.value = renderTargetA.texture
+
+      gl.setRenderTarget(renderTargetB)
+      gl.clear()
+      gl.render(sceneBlurB, cameraBlur)
+    }
+
+    gl.setRenderTarget(null)
+
+    planeA.geometry.dispose()
+    planeB.geometry.dispose()
+    planeA.material.dispose()
+    planeB.material.dispose()
+    sceneBlurA.remove(planeA)
+    sceneBlurB.remove(planeB)
+
+    const blurTexture = renderTargetB.texture
+
+    uniforms.uLogo.value = texture
+    uniforms.uLogoC.value = blurTexture
+  }, [texture])
 
   useMemo(() => {
     if (mesh.current && mesh.current.material) {
@@ -443,6 +538,18 @@ const Scene = forwardRef(({ fps }, ref) => {
         position={[0, 0, 90]}
       />
 
+      {/* <OrthographicCamera
+        ref={cam}
+        makeDefault
+        manual
+        left={-1}
+        right={1}
+        top={1}
+        bottom={-1}
+        near={-1}
+        far={1}
+      /> */}
+
       {/* mouse events don't fire within portal state (creates new state (?), so need to pass root state mouse values to portal) */}
       {/* https://docs.pmnd.rs/react-three-fiber/tutorials/v8-migration-guide#createportal-creates-a-state-enclave */}
       {/* https://codesandbox.io/s/kp1w5u?file=/src/App.js */}
@@ -476,6 +583,11 @@ const Scene = forwardRef(({ fps }, ref) => {
           />
         </mesh>
       </group>
+
+      {/* <mesh>
+        <planeGeometry args={[2, 2]} />
+        <meshBasicMaterial map={blurTexture} />
+      </mesh> */}
     </>
   )
 })

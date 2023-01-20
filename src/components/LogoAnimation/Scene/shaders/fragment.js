@@ -226,7 +226,7 @@ export default /* glsl */ `
     vec3 accumulation = vec3(0);
     vec3 weightsum = vec3(0);
     for (float i = -kernel; i <= kernel; i++){
-        accumulation += texture2D(uScene, uv_ + vec2(i * pixelSize, 0.0)).xyz * weight;
+        accumulation += texture2D(uScene, uv_ + vec2(i, i) * pixelSize).xyz * weight;
         weightsum += weight;
     }
     
@@ -330,8 +330,8 @@ export default /* glsl */ `
  
 
     // off.y += -ft * .5;
-    off.y += -ft * ((1.-cubicInOut(abs(uv.x * 2. -1.))) * 1. + .5) + r * .005 * ft * 15.;
-    cOff2.y = ft * r * .01;
+    off.y += (-ft * aspectS.y) * (((1.-cubicInOut(abs(uv.x * 2. -1.))) * 1. + .5) + 0.1) + r * .005 * ft * 15.;
+    cOff2.y = (ft * aspectS.y) * r * .01;
 
 
 
@@ -356,11 +356,14 @@ export default /* glsl */ `
 
     vec4 cg = vec4(palette(uTime*.5 + newUv.x * newUv.y , vec3(.5), vec3(.5), vec3(1.), vec3(0., 0.33, 0.67)), 1.);
 
-    vec4 c2 = texture2D(uLogoC, newUv + off) * cg;
-    color += c2 * smoothstep(0., 1., c2.a) * alpha; // can affect smoothstep to get thicker/thinner colour  
+    vec4 c2 = texture2D(uLogoC, newUv + off) * cg * 3.; // * 1.
+    // color += c2 * smoothstep(0., 1., c2.a) * alpha; // can affect smoothstep to get thicker/thinner colour  
+    color += c2 * alpha; // can affect smoothstep to get thicker/thinner colour  
 
-    vec4 c3 = texture2D(uLogoC, newUv + off + cOff2) * cg * ft * 5.;
-    color += c3 * smoothstep(0., 1., c3.a * (sin(uTime * 0. + uv.x * uv.y * 8. * (1.-ft)) *.5 + .5));
+    vec4 c3 = texture2D(uLogoC, newUv + off + cOff2) * cg * ft * 5. * 2.; // * 1.
+    // color += c3 * smoothstep(0., 1., c3.a * (sin(uTime * 0. + uv.x * uv.y * 8. * (1.-ft)) *.5 + .5));
+    // color += c3 * smoothstep(0., 1., sin(uTime * 0. + uv.x * uv.y * 8. * (1.-ft)) *.5 + .5);
+    color += c3;
 
     // vec2 uv = gl_FragCoord.xy / uResolution.xy;
     // vec3 color = vec3(uv, 1.0);
@@ -377,7 +380,11 @@ export default /* glsl */ `
     // color.rgb = max(color.rgb, uColor);
     // color.rgb += vec3(0., 0., .2);
 
-    // c = texture2D(uScene, uv_);
+    // c = texture2D(uLogoC, newUv);
+    // c += smoothstep(0., .5, texture2D(uLogoC, newUv));
+    // c += texture2D(uLogoC, newUv);
+    // c *= 2.;
+    // c = pow(c, vec4(.5));
     gl_FragColor = color;
     // gl_FragColor = texture2D(uLogo, vUv);
   }

@@ -13,19 +13,19 @@ import { easeInOutCubic } from '../utils.js'
 const Trail = forwardRef(({ radius, decay, fps }, ref) => {
   const tmp = new THREE.Vector2()
 
-  const { viewport } = useThree()
+  const { size } = useThree()
 
   const [loaded, setLoaded] = useState(false)
   const [mousePoints, setMousePoints] = useState(false)
 
   const pointCount = 1000
   const limit = 512
-  const size = Math.min(
+  const targetSize = Math.min(
     limit,
     THREE.MathUtils.ceilPowerOfTwo(Math.sqrt(pointCount))
   )
 
-  const target = useFBO(size, size, {
+  const target = useFBO(targetSize, targetSize, {
     minFilter: THREE.NearestFilter,
     magFilter: THREE.NearestFilter,
     format: THREE.RGBAFormat,
@@ -52,7 +52,7 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
       points.push(new THREE.Vector2(0, 0))
     }
 
-    const data = new Float32Array(size * size * 4)
+    const data = new Float32Array(targetSize * targetSize * 4)
     const position = new Float32Array(pointCount * 3 * 2)
     const index = new Uint16Array((pointCount - 1) * 3 * 2)
 
@@ -65,8 +65,8 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
       // Want to draw point closest to mouse last so it is drawn on top (using transparency means z pos is ignored)
       // Therefore we draw position into array in reverse
       let i3 = (pointCount - i - 1) * 3 * 2
-      position[i3 + 0] = position[i3 + 3] = (i % size) / size
-      position[i3 + 1] = position[i3 + 4] = i / size / size
+      position[i3 + 0] = position[i3 + 3] = (i % targetSize) / targetSize
+      position[i3 + 1] = position[i3 + 4] = i / targetSize / targetSize
       position[i3 + 2] = -1
       position[i3 + 5] = 1
 
@@ -78,8 +78,8 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
 
     const positionsTexture = new THREE.DataTexture(
       data,
-      size,
-      size,
+      targetSize,
+      targetSize,
       THREE.RGBAFormat,
       THREE.FloatType
     )
@@ -92,11 +92,11 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
     const trailUniforms = {
       positions: { value: null },
       uTime: { value: 0 },
-      uSize: { value: size },
+      uSize: { value: targetSize },
       uInfo: { value: new THREE.Vector4(pointCount, 200, radius, decay) },
       uDisplay: { value: 0 },
       resolution: {
-        value: new THREE.Vector2(viewport.width, viewport.height),
+        value: new THREE.Vector2(size.width, size.height),
       },
     }
 
@@ -120,7 +120,7 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
     const fpsFactor = Math.floor(
       (THREE.MathUtils.clamp(fps, 30, 120) / 60) * 100
     )
-    console.log('fpsFactor', fpsFactor)
+    // console.log('fpsFactor', fpsFactor)
     return [fpsFactor]
   }, [fps])
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo, useLayoutEffect } from 'react'
+import { useEffect, useRef, useMemo, useState } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
 import { OrthographicCamera, useTexture } from '@react-three/drei'
@@ -13,10 +13,14 @@ import meltLogo from '../assets/textures/melt_logo.png'
 import smiley from '../assets/textures/smiley.png'
 import noise from '../assets/textures/noise.png'
 
+import { HorizontalBlurShader } from 'three/examples/jsm/shaders/HorizontalBlurShader'
+import { VerticalBlurShader } from 'three/examples/jsm/shaders/VerticalBlurShader'
+
 import { downloadConfig } from '../utils'
 
 const Scene = () => {
   const mesh = useRef()
+  const [blurStrength, setBlurStrength] = useState(2)
 
   const { gl, size, viewport } = useThree()
 
@@ -34,6 +38,41 @@ const Scene = () => {
   const store = levaStore.useStore()
 
   const { image, upload } = useControls({
+    image: folder(
+      {
+        image: {
+          options: { smiley, melt: meltLogo },
+          order: -4,
+        },
+        upload: {
+          image: null,
+          order: -3,
+        },
+        blurStrength: {
+          label: 'blur',
+          value: 2,
+          min: 0,
+          max: 20,
+          step: 1,
+          order: -2,
+          onEditEnd: (v) => {
+            setBlurStrength(v)
+          },
+        },
+        imageStrength: {
+          label: 'strength',
+          value: config.imageStrength,
+          min: 0,
+          max: 1,
+          step: 0.01,
+          onChange: (v) => {
+            mesh.current.material.uniforms.uDistortion.value.x = v
+          },
+          order: -1,
+        },
+      },
+      { order: -4 }
+    ),
     lines: folder(
       {
         lineCount: {
@@ -94,7 +133,7 @@ const Scene = () => {
           },
         },
       },
-      { order: 1 }
+      { order: -3 }
     ),
     mouse: folder(
       {
@@ -116,28 +155,7 @@ const Scene = () => {
           },
         },
       },
-      { order: 2 }
-    ),
-    image: folder(
-      {
-        image: {
-          options: { smiley, melt: meltLogo },
-        },
-        upload: {
-          image: null,
-        },
-        imageStrength: {
-          label: 'strength',
-          value: config.imageStrength,
-          min: 0,
-          max: 1,
-          step: 0.01,
-          onChange: (v) => {
-            mesh.current.material.uniforms.uDistortion.value.x = v
-          },
-        },
-      },
-      { order: 3 }
+      { order: -2 }
     ),
     debug: folder(
       {
@@ -163,7 +181,7 @@ const Scene = () => {
           downloadConfig(JSON.stringify({ config: newConfig }))
         }),
       },
-      { order: 5 }
+      { order: -1 }
     ),
   })
 
@@ -173,57 +191,137 @@ const Scene = () => {
 
   const noiseTexture = useTexture(noise)
 
-  useLayoutEffect(() => {
-    mesh.current.material.uniforms.uImage.value = texture
-  }, [texture])
+  // useLayoutEffect(() => {
+  //   mesh.current.material.uniforms.uImage.value = texture
+  // }, [texture])
 
-  const [imageData] = useMemo(() => {
-    const scene = new THREE.Scene()
+  // Get blurred image for color effect
+  // Only run on load or if new image uploaded (debug mode only)
+  // On live site should be a pre-made texture uploaded
+  const blurTexture = useMemo(() => {
+    if (blurStrength === 0) return texture
 
-    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -10, 10)
-    scene.add(camera)
+    // console.log(upload)
+    // console.log(texture)
+    // console.log('Generating blur texture')
 
-    const limit = 1024
-    const targetSize = Math.min(
-      limit,
-      THREE.MathUtils.floorPowerOfTwo(Math.max(size.width, size.height))
+    const blurTextureSize = 1024
+
+    // Test blur effect render
+    let renderTargetA = new THREE.WebGLRenderTarget(
+      blurTextureSize,
+      blurTextureSize,
+      {
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+        // format: THREE.RGBAFormat,
+        // encoding: THREE.sRGBEncoding,
+      }
     )
-    const target = new THREE.WebGLRenderTarget(targetSize, targetSize, {
-      multisample: false,
-      stencilBuffer: false,
-      depthBuffer: false,
-    })
-
-    texture.flipY = false
-    const plane = new THREE.Mesh(
+    let renderTargetB = new THREE.WebGLRenderTarget(
+      blurTextureSize,
+      blurTextureSize,
+      {
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+        // format: THREE.RGBAFormat,
+        // encoding: THREE.sRGBEncoding,
+      }
+    )
+    const cameraBlur = new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1)
+    const sceneBlurA = new THREE.Scene()
+    const sceneBlurB = new THREE.Scene()
+    const planeA = new THREE.Mesh(
       new THREE.PlaneGeometry(2, 2),
-      new THREE.MeshBasicMaterial({
-        map: texture,
-      })
+      new THREE.ShaderMaterial(HorizontalBlurShader)
     )
-    scene.add(plane)
+    const planeB = new THREE.Mesh(
+      new THREE.PlaneGeometry(2, 2),
+      new THREE.ShaderMaterial(VerticalBlurShader)
+    )
+    planeA.material.uniforms.h.value = 1 / blurTextureSize
+    planeB.material.uniforms.v.value = 1 / blurTextureSize
 
-    gl.setRenderTarget(target)
-    gl.render(scene, camera)
+    sceneBlurA.add(planeA)
+    sceneBlurA.add(cameraBlur)
+    sceneBlurB.add(planeB)
+    sceneBlurB.add(cameraBlur)
 
-    // Bug with writing tex image to canvas and using getimageData in Firefox as color space values interpreted differently/wrong, so write tex to plane and use render target texture instead to get correct values
-    const buffer = new Uint8Array(targetSize * targetSize * 4)
-    gl.readRenderTargetPixels(target, 0, 0, targetSize, targetSize, buffer)
+    for (let i = 0; i < blurStrength; i++) {
+      if (i === 0) planeA.material.uniforms.tDiffuse.value = texture
+      else planeA.material.uniforms.tDiffuse.value = renderTargetB.texture
 
-    const imageData = {
-      data: buffer,
-      width: targetSize,
-      height: targetSize,
+      gl.setRenderTarget(renderTargetA)
+      gl.clear()
+      gl.render(sceneBlurA, cameraBlur)
+
+      planeB.material.uniforms.tDiffuse.value = renderTargetA.texture
+
+      gl.setRenderTarget(renderTargetB)
+      gl.clear()
+      gl.render(sceneBlurB, cameraBlur)
     }
 
     gl.setRenderTarget(null)
 
-    plane.geometry.dispose()
-    plane.material.dispose()
-    scene.remove(plane)
+    planeA.geometry.dispose()
+    planeB.geometry.dispose()
+    planeA.material.dispose()
+    planeB.material.dispose()
+    sceneBlurA.remove(planeA)
+    sceneBlurB.remove(planeB)
 
-    return [imageData]
-  }, [texture])
+    const blurTexture = renderTargetB.texture
+
+    return blurTexture
+  }, [texture, blurStrength])
+
+  // const [imageData] = useMemo(() => {
+  //   const scene = new THREE.Scene()
+
+  //   const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -10, 10)
+  //   scene.add(camera)
+
+  //   const limit = 1024
+  //   const targetSize = Math.min(
+  //     limit,
+  //     THREE.MathUtils.floorPowerOfTwo(Math.max(size.width, size.height))
+  //   )
+  //   const target = new THREE.WebGLRenderTarget(targetSize, targetSize, {
+  //     multisample: false,
+  //     stencilBuffer: false,
+  //     depthBuffer: false,
+  //   })
+
+  //   const plane = new THREE.Mesh(
+  //     new THREE.PlaneGeometry(2, 2),
+  //     new THREE.MeshBasicMaterial({
+  //       map: blurTexture,
+  //     })
+  //   )
+  //   scene.add(plane)
+
+  //   gl.setRenderTarget(target)
+  //   gl.render(scene, camera)
+
+  //   // Bug with writing tex image to canvas and using getimageData in Firefox as color space values interpreted differently/wrong, so write tex to plane and use render target texture instead to get correct values
+  //   const buffer = new Uint8Array(targetSize * targetSize * 4)
+  //   gl.readRenderTargetPixels(target, 0, 0, targetSize, targetSize, buffer)
+
+  //   const imageData = {
+  //     data: buffer,
+  //     width: targetSize,
+  //     height: targetSize,
+  //   }
+
+  //   gl.setRenderTarget(null)
+
+  //   plane.geometry.dispose()
+  //   plane.material.dispose()
+  //   scene.remove(plane)
+
+  //   return [imageData]
+  // }, [blurTexture])
 
   const [uniforms, mouse] = useMemo(() => {
     const {
@@ -242,16 +340,11 @@ const Scene = () => {
     // const distance = new THREE.Vector2()
 
     const uniforms = {
-      uImage: { value: texture },
+      uImage: { value: blurTexture },
       uColor: { value: new THREE.Color(lineColor) },
       uTime: { value: 0 },
       uResolution: {
-        value: new THREE.Vector4(
-          size.width,
-          size.height,
-          imageData.width,
-          imageData.height
-        ),
+        value: new THREE.Vector4(size.width, size.height, 1024, 1024),
       },
       PI: { value: Math.PI },
       uLine: {
@@ -273,8 +366,13 @@ const Scene = () => {
     return [uniforms, mouse]
   }, [])
 
+  useEffect(() => {
+    mesh.current.material.uniforms.uImage.value = blurTexture
+    mesh.current.material.needsUpdate = true
+  }, [blurTexture])
+
   // Update resolution uniform on viewport resize
-  useMemo(() => {
+  useEffect(() => {
     if (mesh.current && mesh.current.material) {
       mesh.current.material.uniforms.uResolution.value.x = size.width
       mesh.current.material.uniforms.uResolution.value.y = size.height

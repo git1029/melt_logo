@@ -40,7 +40,7 @@
 .shrinker {
   width: 100%;
   position: relative;
-  /* bottom: 15vh; */
+  bottom: 15vh;
 }
 .logo_knockout {
   width: 100%;
