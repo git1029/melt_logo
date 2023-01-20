@@ -116,12 +116,17 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
     ]
   }, [])
 
-  const updatePoints = (mouse, delta) => {
-    // Couldn't move position update to GPU as points need to be updated serially rather than all at same time (as need next points updated position)
-    // TO DO: consistent update across diff FPS
+  const [fpsFactor] = useMemo(() => {
     const fpsFactor = Math.floor(
       (THREE.MathUtils.clamp(fps, 30, 120) / 60) * 100
     )
+    console.log('fpsFactor', fpsFactor)
+    return [fpsFactor]
+  }, [fps])
+
+  const updatePoints = (mouse, delta) => {
+    // Couldn't move position update to GPU as points need to be updated serially rather than all at same time (as need next points updated position)
+    // TO DO: consistent update across diff FPS
     for (let j = 0; j < pointCount / fpsFactor; j++) {
       for (let i = points.length - 1; i >= 0; i--) {
         if (i === 0) {
