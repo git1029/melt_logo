@@ -6,9 +6,8 @@ export default /* glsl */ `
   uniform vec4 uInfo; // vec4(count, strokeweight, radius, decay)
   uniform float uDisplay;
   
-  varying vec2 vDir;
+  varying vec3 vDir;
   varying vec2 vUv;
-  varying float vDist;
 
   vec2 getUv(float i) {
     float size = uSize;
@@ -27,7 +26,6 @@ export default /* glsl */ `
     vec3 pos = texture2D(positions, position.xy).xyz;
     float i = pos.z;
     vec2 uv = vec2(side * .5 + .5, 1.-i/count);
-
 
     // TODO
     // Implement estimate on 1st/last points
@@ -88,7 +86,6 @@ export default /* glsl */ `
     gl_Position = projectionPosition;
 
     vUv = uv;
-    vDist = dist;
-    vDir = tangent;
+    vDir = vec3(tangent, dist);
   }
 `

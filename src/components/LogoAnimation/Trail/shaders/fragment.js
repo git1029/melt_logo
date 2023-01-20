@@ -2,8 +2,7 @@ export default /* glsl */ `
   uniform vec4 uInfo; // vec4(count, strokeweight, radius, decay)
 
   varying vec2 vUv;
-  varying vec2 vDir;
-  varying float vDist;
+  varying vec3 vDir;
 
   float map(float value, float min1, float max1, float min2, float max2) {
     return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
@@ -19,13 +18,14 @@ export default /* glsl */ `
     if (gl_PointCoord.x < -1. || gl_PointCoord.x > 1. || gl_PointCoord.y < -1. || gl_PointCoord.y > 1.) discard;
 
     float decay = uInfo.w;
+    float dist = vDir.z;
 
     vec4 color = vec4(1.);
     color.r = vDir.x * .5 + .5;
     color.g = vDir.y * .5 + .5;
 
     // color.b = map(vDist, 0., 1., 0., 1.);
-    color.b = vDist;
+    color.b = dist;
     // color.a *= pow(vUv.y, 1.);
     // color.a *= smoothstep(clamp(uInfo.w * .5, 0., 1.), 1., vUv.y);
     color.a *= smoothstep(
