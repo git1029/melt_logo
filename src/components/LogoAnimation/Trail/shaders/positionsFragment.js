@@ -5,6 +5,7 @@ export default /* glsl */ `
 
   void main() {
     vec3 pos = texture2D(positions, vUv).rgb;
+
     gl_FragColor = vec4(pos, 1.0);
   }
 `

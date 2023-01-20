@@ -22,7 +22,7 @@ import { downloadConfig } from '../utils'
 
 // https://eriksachse.medium.com/react-three-fiber-custom-postprocessing-render-target-solution-without-using-the-effectcomposer-d3a94e6ae3c3
 
-const Scene = forwardRef((_props, ref) => {
+const Scene = forwardRef(({ fps }, ref) => {
   const cam = useRef()
   const mesh = useRef()
   const trail = useRef()
@@ -34,7 +34,7 @@ const Scene = forwardRef((_props, ref) => {
   const { config } = logoConfig
 
   useEffect(() => {
-    // console.log('RENDER SCENE')
+    console.log('RENDER SCENE')
   }, [])
 
   const store = levaStore.useStore()
@@ -450,6 +450,7 @@ const Scene = forwardRef((_props, ref) => {
         <Trail
           radius={config.displacementRadius}
           decay={config.displacementDecay}
+          fps={fps}
           ref={trail}
         />,
         scene,

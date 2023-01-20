@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { useMemo, useState, forwardRef, useEffect } from 'react'
+import { useMemo, useState, forwardRef, useEffect, useRef } from 'react'
 import { createPortal, useFrame, useThree } from '@react-three/fiber'
 import { useFBO } from '@react-three/drei'
 
@@ -10,8 +10,9 @@ import fragmentShader from './shaders/fragment.js'
 
 import { easeInOutCubic } from '../utils.js'
 
-const Trail = forwardRef(({ radius, decay, fps }, ref) => {
+const TrailTest = forwardRef(({ radius, decay }, ref) => {
   const tmp = new THREE.Vector2()
+  const sim = useRef()
 
   const { viewport } = useThree()
 
@@ -41,7 +42,7 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
     position,
     positionsTexture,
     data,
-    index,
+    // index,
     positionsUniforms,
     trailUniforms,
     scene,
@@ -49,12 +50,17 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
   ] = useMemo(() => {
     const points = []
     for (let i = 0; i < pointCount; i++) {
-      points.push(new THREE.Vector2(0, 0))
+      points.push(
+        new THREE.Vector2(
+          Math.sin((i / pointCount) * Math.PI * 0.9) * 0.5,
+          Math.cos((i / pointCount) * Math.PI * 0.9) * 0.5
+        )
+      )
     }
 
     const data = new Float32Array(size * size * 4)
-    const position = new Float32Array(pointCount * 3 * 2)
-    const index = new Uint16Array((pointCount - 1) * 3 * 2)
+    const position = new Float32Array(pointCount * 3)
+    // const index = new Uint16Array((pointCount - 1) * 3 * 2)
 
     for (let i = 0; i < pointCount; i++) {
       points[i].toArray(data, i * 4)
@@ -64,16 +70,14 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
       // Vertex shader will draw each vertice by order in position array
       // Want to draw point closest to mouse last so it is drawn on top (using transparency means z pos is ignored)
       // Therefore we draw position into array in reverse
-      let i3 = (pointCount - i - 1) * 3 * 2
-      position[i3 + 0] = position[i3 + 3] = (i % size) / size
-      position[i3 + 1] = position[i3 + 4] = i / size / size
-      position[i3 + 2] = -1
-      position[i3 + 5] = 1
+      let i3 = (pointCount - i - 1) * 3
+      position[i3 + 0] = (i % size) / size
+      position[i3 + 1] = i / size / size
 
-      if (i === pointCount - 1) continue
-      const ind = i * 2
-      index.set([ind + 0, ind + 1, ind + 2], (ind + 0) * 3)
-      index.set([ind + 2, ind + 1, ind + 3], (ind + 1) * 3)
+      // if (i === pointCount - 1) continue
+      // const ind = i * 2
+      // index.set([ind + 0, ind + 1, ind + 2], (ind + 0) * 3)
+      // index.set([ind + 2, ind + 1, ind + 3], (ind + 1) * 3)
     }
 
     const positionsTexture = new THREE.DataTexture(
@@ -87,6 +91,8 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
 
     const positionsUniforms = {
       positions: { value: positionsTexture },
+      uMouse: { value: new THREE.Vector2() },
+      uTime: { value: 0 },
     }
 
     const trailUniforms = {
@@ -108,7 +114,7 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
       position,
       positionsTexture,
       data,
-      index,
+      // index,
       positionsUniforms,
       trailUniforms,
       scene,
@@ -119,23 +125,20 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
   const updatePoints = (mouse, delta) => {
     // Couldn't move position update to GPU as points need to be updated serially rather than all at same time (as need next points updated position)
     // TO DO: consistent update across diff FPS
-    const fpsFactor = Math.floor(
-      (THREE.MathUtils.clamp(fps, 30, 120) / 60) * 100
-    )
-    for (let j = 0; j < pointCount / fpsFactor; j++) {
-      for (let i = points.length - 1; i >= 0; i--) {
-        if (i === 0) {
-          tmp.copy(mouse).sub(points[i])
-          points[i].add(tmp)
-        } else {
-          let t = i / points.length
-          t = easeInOutCubic(t)
-          t = THREE.MathUtils.mapLinear(t, 0, 1, 0.5, 0.75)
-          // t = 1
-          points[i].lerp(points[i - 1], t)
-        }
+    // for (let j = 0; j < pointCount / 100; j++) {
+    for (let i = points.length - 1; i >= 0; i--) {
+      if (i === 0) {
+        tmp.copy(mouse).sub(points[i])
+        points[i].add(tmp)
+      } else {
+        // let t = i / points.length
+        // t = easeInOutCubic(t)
+        // t = THREE.MathUtils.mapLinear(t, 0, 1, 0.5, 0.75)
+        // // t = 1
+        // points[i].lerp(points[i - 1], t)
       }
     }
+    // }
     // // for (let j = 0; j < pointCount / 100; j++) {
     // for (let i = 0; i < points.length; i++) {
     //   if (i === 0) {
@@ -188,7 +191,7 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
   }
 
   useEffect(() => {
-    console.log('RENDER TRAIL')
+    // console.log('RENDER TRAIL')
     setLoaded(true)
   })
 
@@ -209,10 +212,17 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
       setMousePoints(true) // shouldn't really mutate state in useFrame but this should only be run once
     }
 
-    if (loaded) updatePoints(mouse, delta)
+    sim.current.material.uniforms.uMouse.value.x = mouse.x
+    sim.current.material.uniforms.uMouse.value.y = mouse.y
+    sim.current.material.uniforms.uTime.value += delta
+
+    ref.current.material.uniforms.uTime.value += delta
+    // if (loaded) updatePoints(mouse, delta)
+    positionsTexture.needsUpdate = true
 
     ref.current.material.uniforms.positions.value = target.texture
-    ref.current.material.uniforms.uTime.value = delta
+    target.texture.needsUpdate = true
+    ref.current.material.needsUpdate = true
 
     if (!mousePoints) mouseLast.set(mouse.x, mouse.y)
 
@@ -223,7 +233,7 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
   return (
     <>
       {createPortal(
-        <mesh>
+        <mesh ref={sim}>
           <planeGeometry args={[2, 2]} />
           <shaderMaterial
             vertexShader={positionsVertexShader}
@@ -234,20 +244,20 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
         scene
       )}
 
-      <mesh ref={ref}>
+      <points ref={ref}>
         <bufferGeometry>
-          <bufferAttribute
+          {/* <bufferAttribute
             attach="index"
             count={index.length}
             itemSize={1}
             array={index}
-          />
+          /> */}
           <bufferAttribute
             attach="attributes-position"
             count={position.length / 3}
             array={position}
             itemSize={3}
-            dynamic
+            // dynamic
           />
         </bufferGeometry>
         <shaderMaterial
@@ -260,9 +270,9 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
           alphaTest={0}
           // wireframe={true}
         />
-      </mesh>
+      </points>
     </>
   )
 })
 
-export default Trail
+export default TrailTest
