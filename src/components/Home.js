@@ -5,10 +5,15 @@ import '../css/Home.css'
 const Home = () => {
   const fadeInRef = useRef(null)
   const fadeInTriggerRef = useRef(null)
+  // to pass observer changes to canvas
+  // needs to be passed to LogoAnimation below as:
+  // <LogoAnimation effectRef={effectRef} />
   const effectRef = useRef(null)
+
   const [backgroundColor, setBackgroundColor] = useState('#000000')
   const [backgroundImage, setBackgroundImage] = useState('none')
 
+  // update canvas uniforms on show/hide
   const updateEffect = (stage) => {
     if (effectRef.current) {
       if (effectRef.current.uniforms.uTransition.value.x !== stage) {
@@ -36,7 +41,7 @@ const Home = () => {
       if (entries[0].isIntersecting) {
         document.querySelector('.fade-in-up-element').classList.add('no-more')
 
-        // Hide
+        // update canvas on hide
         updateEffect(1)
       }
     })
@@ -51,7 +56,7 @@ const Home = () => {
           .querySelector('.fade-in-up-element')
           .classList.remove('no-more')
 
-        // Show
+        // update canvas on show
         updateEffect(0)
       }
     })

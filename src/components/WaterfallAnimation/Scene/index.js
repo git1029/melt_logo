@@ -11,6 +11,7 @@ import fragmentShader from './shaders/fragment'
 
 import meltLogo from '../assets/textures/melt_logo.png'
 import smiley from '../assets/textures/smiley.png'
+import noise from '../assets/textures/noise.png'
 
 import { downloadConfig } from '../utils'
 
@@ -170,6 +171,8 @@ const Scene = () => {
     upload === undefined || upload === null ? image : upload
   )
 
+  const noiseTexture = useTexture(noise)
+
   useLayoutEffect(() => {
     mesh.current.material.uniforms.uImage.value = texture
   }, [texture])
@@ -263,6 +266,7 @@ const Scene = () => {
         ),
       },
       uMouse: { value: mouse },
+      uNoise: { value: noiseTexture },
       // uDist: { value: distance },
     }
 

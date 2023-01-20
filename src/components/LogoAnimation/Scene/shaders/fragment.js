@@ -9,11 +9,8 @@ export default /* glsl */ `
   uniform float uNormal;
   uniform float uDPR;
   uniform vec4 uResolution;
-  // uniform vec3 uWave;
   uniform vec4 uTransition;
-  // uniform vec2 uMouse;
   uniform float refractionRatio;
-  // varying vec2 vUv;
   uniform vec3 uColor;
 
   varying vec3 worldNormal;
@@ -32,7 +29,6 @@ export default /* glsl */ `
       ? 4.0 * t * t * t
       : 0.5 * pow(2.0 * t - 2.0, 3.0) + 1.0;
   }
-  
 
   // cosine based palette, 4 vec3 params
   vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d) {

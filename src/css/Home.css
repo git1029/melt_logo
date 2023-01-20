@@ -12,7 +12,9 @@
   transform: translateY(0);
 }
 .fade-in-up-element.visible.no-more {
+  /* give time for transition effect before fade out */
   transition-delay: 2s;
+
   opacity: 0;
   transform: translateY(-100px);
 }
