@@ -1,36 +1,19 @@
 import { useState, useEffect, useRef } from 'react'
+import { useFadeEffect } from './helpers/fadeEffect'
 import LogoAnimation from './LogoAnimation'
 import '../css/Home.css'
 
 const Home = () => {
   const fadeInRef = useRef(null)
   const fadeInTriggerRef = useRef(null)
-  // to pass observer changes to canvas
-  // needs to be passed to LogoAnimation below as:
+
+  // Handles logo animation scroll transition effect
+  // effectRef needs to be passed to LogoAnimation below as:
   // <LogoAnimation effectRef={effectRef} />
-  const effectRef = useRef(null)
+  const { effectRef, updateFadeEffect } = useFadeEffect()
 
   const [backgroundColor, setBackgroundColor] = useState('#000000')
   const [backgroundImage, setBackgroundImage] = useState('none')
-
-  // update canvas uniforms on show/hide
-  const updateEffect = (stage) => {
-    if (effectRef.current) {
-      if (effectRef.current.uniforms.uTransition.value.x !== stage) {
-        const { uTransition, uTime, uFadeLast } = effectRef.current.uniforms
-        uFadeLast.value = uTransition.value.y
-        uTransition.value.x = stage
-        uTransition.value.w = uTransition.value.z
-        uTransition.value.z = uTime.value
-        // console.log(
-        //   stage === 1 ? 'hide' : 'show',
-        //   uTransition.value,
-        //   uTransition.value.z - uTransition.value.w,
-        //   uFadeLast.value
-        // )
-      }
-    }
-  }
 
   useEffect(() => {
     setTimeout(() => {
@@ -42,7 +25,7 @@ const Home = () => {
         document.querySelector('.fade-in-up-element').classList.add('no-more')
 
         // update canvas on hide
-        updateEffect(1)
+        updateFadeEffect(1)
       }
     })
 
@@ -57,7 +40,7 @@ const Home = () => {
           .classList.remove('no-more')
 
         // update canvas on show
-        updateEffect(0)
+        updateFadeEffect(0)
       }
     })
 

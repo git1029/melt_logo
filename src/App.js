@@ -13,9 +13,6 @@ const Menu = () => {
   )
 }
 
-// const About = () => null
-// const Contact = () => null
-
 const App = () => {
   return (
     <>
@@ -31,7 +28,6 @@ const App = () => {
             </div>
           }
         />
-        {/* <Route path="/contact" element={<Contact />} /> */}
       </Routes>
     </>
   )

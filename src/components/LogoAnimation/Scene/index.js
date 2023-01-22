@@ -1,31 +1,28 @@
-import { useEffect, useRef, useMemo, forwardRef } from 'react'
+import { useState, useEffect, useRef, useMemo, forwardRef } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree, createPortal, useLoader } from '@react-three/fiber'
 import { useFBO, useTexture, PerspectiveCamera } from '@react-three/drei'
-import { useControls, button, folder, levaStore } from 'leva'
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 
-import logoConfig from '../config.json'
-// import logoService from './services/logoService'
+import defaultConfig from '../config/config.json'
+import { setupConfig } from '../../helpers/LevaControls/setupConfig'
+// import configService from '../../../services/configService'
+import { useLeva } from '../config/controls'
 
-import Trail from '../Trail'
+import Trail from './Trail'
 
 import vertexPass from './shaders/vertex'
 import fragmentPass from './shaders/fragment'
 
 import meltLogo from '../assets/textures/melt_logo.png'
 // import meltLogoFade from '../assets/textures/melt_logo_fade.png'
-
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import warpedGlass from '../assets/models/warped_glass.obj'
 
-import { downloadConfig } from '../utils'
-
-import { HorizontalBlurShader } from 'three/examples/jsm/shaders/HorizontalBlurShader'
-import { VerticalBlurShader } from 'three/examples/jsm/shaders/VerticalBlurShader'
+import { blur } from '../../helpers/blurTexture'
 
 // https://eriksachse.medium.com/react-three-fiber-custom-postprocessing-render-target-solution-without-using-the-effectcomposer-d3a94e6ae3c3
 
-const Scene = forwardRef(({ fps }, ref) => {
+const Scene = forwardRef(({ fps, controls }, ref) => {
   const cam = useRef()
   const mesh = useRef()
   const trail = useRef()
@@ -34,176 +31,67 @@ const Scene = forwardRef(({ fps }, ref) => {
   const three = useThree()
   const { size, viewport, gl } = three
 
-  const { config } = logoConfig
+  const [config, setConfig] = useState(defaultConfig)
+  const useServerConfig = true
+  // const name = 'logo'
 
   useEffect(() => {
     console.log('RENDER SCENE')
+    // if (!useServerConfig) {
+    //   // If not using server then load default local config if exists
+    //   // else use local config
+    //   const localConfig = JSON.parse(window.localStorage.getItem('melt_config'))
+    //   if (localConfig !== null && localConfig[name]) {
+    //     console.log('updateStore', localConfig[name])
+    //     updateStore(localConfig[name])
+    //   }
+
+    //   setConfig(defaultConfig)
+    //   return
+    // }
+
+    // const fetchConfig = async () => {
+    //   const serverConfig = await configService.getConfig()
+    //   const config = serverConfig[name]
+
+    //   // localStorage config (if exists) can take precedence over server config
+    //   // if same values result will be same anyway, if diff then want localstorage
+    //   if (controls) {
+    //     const localConfig = JSON.parse(
+    //       window.localStorage.getItem('melt_config')
+    //     )
+    //     if (localConfig !== null && localConfig[name]) {
+    //       updateStore(localConfig[name])
+    //     } else {
+    //       updateStore(config)
+    //     }
+    //   }
+
+    //   // still want to use server config as base state config
+    //   setConfig(config)
+    // }
+    // fetchConfig()
+    setupConfig(
+      'logo',
+      defaultConfig,
+      useServerConfig,
+      updateConfig,
+      updateStore,
+      controls
+    )
   }, [])
 
-  const store = levaStore.useStore()
+  const updateConfig = (newConfig) => setConfig(newConfig)
 
-  const { upload, mouseArea, rotAngle, rotSpeed } = useControls({
-    image: folder(
-      {
-        upload: {
-          image: null,
-        },
-      },
-      { order: -4 }
-    ),
-    displacement: folder(
-      {
-        displacementStrength: {
-          label: 'strength',
-          value: config.displacementStrength,
-          min: 0,
-          max: 1,
-          step: 0.1,
-          onChange: (v, path, { initial }) => {
-            mesh.current.material.uniforms.uDisp.value.x = v
-          },
-        },
-        displacementRadius: {
-          label: 'radius',
-          value: config.displacementRadius,
-          min: 0,
-          max: 1,
-          step: 0.1,
-          onChange: (v) => {
-            trail.current.material.uniforms.uInfo.value.z = v
-          },
-        },
-        displacementDecay: {
-          label: 'decay',
-          value: config.displacementDecay,
-          min: 0,
-          max: 1,
-          step: 0.1,
-          onChange: (v) => {
-            trail.current.material.uniforms.uInfo.value.w = v
-          },
-        },
-        colorNoise: {
-          label: 'noise',
-          value: config.colorNoise,
-          min: 0,
-          max: 2,
-          step: 0.1,
-          onChange: (v) => {
-            mesh.current.material.uniforms.uDisp.value.y = v
-          },
-        },
-        colorShift: {
-          label: 'col shift',
-          value: config.colorShift,
-          min: 0,
-          max: 2,
-          step: 0.1,
-          onChange: (v) => {
-            mesh.current.material.uniforms.uDisp.value.z = v
-          },
-        },
-      },
-      { order: -3 }
-    ),
-    refraction: folder(
-      {
-        refractionRatio: {
-          label: 'ratio',
-          value: config.refractionRatio,
-          min: 0,
-          max: 100,
-          step: 1,
-          onChange: (v) => {
-            data.maxRefractionRatio = 1 - v / 100
-          },
-        },
-        mouseSpeed: {
-          label: 'mouse speed',
-          value: config.mouseSpeed,
-          min: 0,
-          max: 100,
-          step: 1,
-          onChange: (v) => {
-            data.i = 0.1 * v
-          },
-        },
-        mouseArea: {
-          label: 'mouse area',
-          value: config.mouseArea,
-          min: 0,
-          max: 1,
-          step: 0.1,
-        },
-        rotAngle: {
-          label: 'rot angle',
-          value: config.rotAngle,
-          min: 0,
-          max: 360,
-          step: 1,
-        },
-        rotSpeed: {
-          label: 'rot speed',
-          value: config.rotSpeed,
-          min: -10,
-          max: 10,
-          step: 0.5,
-        },
-      },
-      { order: -2 }
-    ),
-    debug: folder(
-      {
-        showMouse: {
-          label: 'mouse trail',
-          value: false,
-          onChange: (v) => {
-            mesh.current.material.uniforms.uShowMouse.value = v
-          },
-          order: -4,
-        },
-        wireframe: {
-          label: 'wireframe',
-          value: false,
-          onChange: (v) => {
-            mesh.current.material.wireframe = v
-          },
-          order: -3,
-        },
-        showNormals: {
-          label: 'normals',
-          value: false,
-          onChange: (v) => {
-            mesh.current.material.uniforms.uNormal.value = v
-          },
-          order: -2,
-        },
-        showCursor: {
-          label: 'cursor',
-          value: true,
-          onChange: (v) => {
-            document.body.style.cursor = v ? 'default' : 'none'
-          },
-          order: -1,
-        },
-        'export settings': button(() => {
-          const data = store.data
-          const keys = Object.keys(data)
-          const newConfig = { ...config }
-
-          keys.forEach((key) => {
-            const k = key.split('.').pop()
-            if (newConfig[k]) {
-              newConfig[k] = data[key].value
-            }
-          })
-
-          downloadConfig(JSON.stringify({ config: newConfig }))
-        }),
-      },
-      { order: -1 }
-    ),
-  })
+  const {
+    upload,
+    mouseArea,
+    refractionRatio,
+    mouseSpeed,
+    rotAngle,
+    rotSpeed,
+    updateStore,
+  } = useLeva(controls, config, updateConfig, useServerConfig, [mesh, trail])
 
   // const [logoTexture, logoTextureC] = useTexture([meltLogo, meltLogoFade])
   const texture = useTexture(
@@ -228,19 +116,14 @@ const Scene = forwardRef(({ fps }, ref) => {
     stencilBuffer: false,
     depthBuffer: false,
   })
+  target.texture.minFilter = THREE.LinearFilter
+  target.texture.magFilter = THREE.LinearFilter
 
-  const [scene, uniforms, camera, mouse, data] = useMemo(() => {
-    const {
-      displacementStrength,
-      colorNoise,
-      colorShift,
-      mouseSpeed,
-      refractionRatio,
-    } = config
+  const m = new THREE.Vector2()
+  const mLast = new THREE.Vector2()
 
+  const [scene, uniforms, camera, mouse] = useMemo(() => {
     const scene = new THREE.Scene()
-
-    // console.log('texture', texture)
 
     const uniforms = {
       uTime: { value: 0 },
@@ -253,28 +136,25 @@ const Scene = forwardRef(({ fps }, ref) => {
         ),
       },
       uDisp: {
-        value: new THREE.Vector3(displacementStrength, colorNoise, colorShift),
+        value: new THREE.Vector3(
+          config.displacementStrength,
+          config.colorNoise,
+          config.colorShift
+        ),
       },
       uScene: { value: target.texture },
       uLogo: { value: texture },
+      // uLogoC: { value: logoTextureC },
       uLogoC: { value: null },
       uShowMouse: { value: false },
       uNormal: { value: false },
       uTransition: { value: new THREE.Vector4(0, 0, -10, -10) },
       PI: { value: Math.PI },
-      uMouse: { value: new THREE.Vector2() },
+      // uMouse: { value: new THREE.Vector2() },
       refractionRatio: { value: 1 },
       uDPR: { value: viewport.dpr },
       uColor: { value: new THREE.Color(0x1b884b) },
       uFadeLast: { value: -10 },
-    }
-
-    const data = {
-      aspect: viewport.width / viewport.height,
-      imgAspect: 1,
-      a: 0,
-      i: 0.1 * mouseSpeed,
-      maxRefractionRatio: 1 - refractionRatio / 100,
     }
 
     const mouse = {
@@ -284,101 +164,31 @@ const Scene = forwardRef(({ fps }, ref) => {
       inited: false,
     }
 
-    target.texture.minFilter = THREE.LinearFilter
-    target.texture.magFilter = THREE.LinearFilter
-
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1)
-    camera.zoom = 1
-    camera.position.z = 0
 
-    return [scene, uniforms, camera, mouse, data]
+    return [scene, uniforms, camera, mouse]
   }, [])
 
   // Get blurred image for color effect
   // Only run on load or if new image uploaded (debug mode only)
   // On live site should be a pre-made texture uploaded
-  useMemo(() => {
+  useEffect(() => {
     // console.log(upload)
-    // console.log('Generating blur texture')
-
-    const blurTextureSize = 1028
-
-    // Test blur effect render
-    let renderTargetA = new THREE.WebGLRenderTarget(
-      blurTextureSize,
-      blurTextureSize,
-      {
-        minFilter: THREE.LinearFilter,
-        magFilter: THREE.LinearFilter,
-        // format: THREE.RGBAFormat,
-        // encoding: THREE.sRGBEncoding,
-      }
-    )
-    let renderTargetB = new THREE.WebGLRenderTarget(
-      blurTextureSize,
-      blurTextureSize,
-      {
-        minFilter: THREE.LinearFilter,
-        magFilter: THREE.LinearFilter,
-        // format: THREE.RGBAFormat,
-        // encoding: THREE.sRGBEncoding,
-      }
-    )
-    const cameraBlur = new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1)
-    const sceneBlurA = new THREE.Scene()
-    const sceneBlurB = new THREE.Scene()
-    const planeA = new THREE.Mesh(
-      new THREE.PlaneGeometry(2, 2),
-      new THREE.ShaderMaterial(HorizontalBlurShader)
-    )
-    const planeB = new THREE.Mesh(
-      new THREE.PlaneGeometry(2, 2),
-      new THREE.ShaderMaterial(VerticalBlurShader)
-    )
-    planeA.material.uniforms.h.value = 1 / blurTextureSize
-    planeB.material.uniforms.v.value = 1 / blurTextureSize
-
-    sceneBlurA.add(planeA)
-    sceneBlurA.add(cameraBlur)
-    sceneBlurB.add(planeB)
-    sceneBlurB.add(cameraBlur)
-
-    for (let i = 0; i < 20; i++) {
-      if (i === 0) planeA.material.uniforms.tDiffuse.value = texture
-      else planeA.material.uniforms.tDiffuse.value = renderTargetB.texture
-
-      gl.setRenderTarget(renderTargetA)
-      gl.clear()
-      gl.render(sceneBlurA, cameraBlur)
-
-      planeB.material.uniforms.tDiffuse.value = renderTargetA.texture
-
-      gl.setRenderTarget(renderTargetB)
-      gl.clear()
-      gl.render(sceneBlurB, cameraBlur)
-    }
-
-    gl.setRenderTarget(null)
-
-    planeA.geometry.dispose()
-    planeB.geometry.dispose()
-    planeA.material.dispose()
-    planeB.material.dispose()
-    sceneBlurA.remove(planeA)
-    sceneBlurB.remove(planeB)
-
-    const blurTexture = renderTargetB.texture
+    const blurTexture = blur(gl, 1024, 20, texture)
 
     uniforms.uLogo.value = texture
     uniforms.uLogoC.value = blurTexture
   }, [texture])
 
-  useMemo(() => {
+  // Handle viewport changes
+  useEffect(() => {
+    // Update resolution uniform
     if (mesh.current && mesh.current.material) {
       mesh.current.material.uniforms.uResolution.value.x = size.width
       mesh.current.material.uniforms.uResolution.value.y = size.height
     }
 
+    // Update camera position for narrow and tall screens
     if (cam.current && size.height < 1000) {
       cam.current.position.z = THREE.MathUtils.mapLinear(
         size.height,
@@ -391,9 +201,6 @@ const Scene = forwardRef(({ fps }, ref) => {
     }
   }, [viewport])
 
-  const m = new THREE.Vector2()
-  const mLast = new THREE.Vector2()
-
   const updateMouseMovement = () => {
     let a = {
       x: 0.9 * mouse.prev.x + 0.1 * mouse.current.x,
@@ -403,6 +210,43 @@ const Scene = forwardRef(({ fps }, ref) => {
       0.05 * mouse.current.vectorLength + 0.95 * mouse.prev.vectorLength
     mouse.smoothedVector = a.vectorLength
     mouse.prev = a
+  }
+
+  const clampMouseMovement = () => {
+    if (
+      mouse.current.vectorLength < THREE.MathUtils.clamp(1 - mouseArea, 0, 0.99)
+    ) {
+      mouse.current.vectorLength = 0
+    } else {
+      mouse.current.vectorLength = THREE.MathUtils.mapLinear(
+        mouse.current.vectorLength,
+        THREE.MathUtils.clamp(1 - mouseArea, 0, 0.99),
+        1,
+        0,
+        1
+      )
+    }
+  }
+
+  const updateMouse = (state) => {
+    if (!mouse.inited) {
+      m.set(state.mouse.x, state.mouse.y)
+      if (m.clone().sub(mLast).length() > 0.01) {
+        mouse.inited = true
+      }
+      mLast.set(state.mouse.x, state.mouse.y)
+    } else {
+      m.set(state.mouse.x, state.mouse.y)
+      mouse.current.x = m.x
+      mouse.current.y = m.y
+
+      const vectorLength = m.length()
+      mouse.current.vectorLength =
+        1 - Math.max(Math.min(2 * Math.sqrt(vectorLength) - 1, 1), 0)
+
+      clampMouseMovement()
+      updateMouseMovement()
+    }
   }
 
   const getFadeTime = () => {
@@ -447,77 +291,35 @@ const Scene = forwardRef(({ fps }, ref) => {
     mesh.current.material.uniforms.uTransition.value.y = ft
   }
 
-  useFrame((state, delta) => {
-    if (!mouse.inited) {
-      m.set(state.mouse.x, state.mouse.y)
-      if (m.clone().sub(mLast).length() > 0.01) {
-        mouse.inited = true
-      }
-      mLast.set(state.mouse.x, state.mouse.y)
-    } else {
-      m.set(state.mouse.x, state.mouse.y)
-      mouse.current.x = m.x
-      mouse.current.y = m.y
-
-      const vectorLength = m.length()
-      mouse.current.vectorLength =
-        1 - Math.max(Math.min(2 * Math.sqrt(vectorLength) - 1, 1), 0)
-
-      if (
-        mouse.current.vectorLength <
-        THREE.MathUtils.clamp(1 - mouseArea, 0, 0.99)
-      ) {
-        mouse.current.vectorLength = 0
-      } else {
-        mouse.current.vectorLength = THREE.MathUtils.mapLinear(
-          mouse.current.vectorLength,
-          THREE.MathUtils.clamp(1 - mouseArea, 0, 0.99),
-          1,
-          0,
-          1
-        )
-      }
-
-      updateMouseMovement()
-    }
-
-    // Only update if change
-    // if (
-    //   (scroll.visible(0, 1 / 3) &&
-    //     mesh.current.material.uniforms.uTransition.value.x === 0) ||
-    //   (!scroll.visible(0, 1 / 3) &&
-    //     mesh.current.material.uniforms.uTransition.value.x === 1)
-    // ) {
-    //   mesh.current.material.uniforms.uTransition.value.x = scroll.visible(
-    //     0,
-    //     1 / 3
-    //   )
-    //     ? 1
-    //     : 0
-    //   mesh.current.material.uniforms.uTransition.value.z =
-    //     mesh.current.material.uniforms.uTransition.value.y
-    //   mesh.current.material.uniforms.uTransition.value.y =
-    //     state.clock.elapsedTime
-    // }
+  const animate = (delta) => {
+    // let length = trail.current.material.uniforms.uLength.value
+    // length = THREE.MathUtils.clamp(length, 0, 2)
+    // const lf = 1 - length / 2
 
     mesh.current.material.uniforms.uTime.value += delta
+    const totalDelta = mesh.current.material.uniforms.uTime.value * 60
 
-    getFadeTime()
-
-    cam.current.position.x = mouse.prev.x * data.i * 0.3
-    cam.current.position.y = -mouse.prev.y * data.i * 0.3
-    group.current.rotation.x = -0.05 * mouse.prev.y * data.i
-    group.current.rotation.y = -0.05 * mouse.prev.x * data.i
-    mesh.current.rotation.x =
-      289e-6 * rotSpeed.x * data.a + 0.01745 * rotAngle.x
-    mesh.current.rotation.y =
-      289e-6 * rotSpeed.y * data.a + 0.01745 * rotAngle.y
-    mesh.current.rotation.z =
-      289e-6 * rotSpeed.z * data.a + 0.01745 * rotAngle.z
     mesh.current.material.uniforms.refractionRatio.value =
-      1 - (1 - data.maxRefractionRatio) * mouse.smoothedVector
+      1 - refractionRatio * mouse.smoothedVector * 0.01
 
-    data.a += delta * 60
+    cam.current.position.x = mouse.prev.x * (mouseSpeed * 0.1) * 0.3
+    cam.current.position.y = -mouse.prev.y * (mouseSpeed * 0.1) * 0.3
+
+    group.current.rotation.x = -0.05 * mouse.prev.y * (mouseSpeed * 0.1)
+    group.current.rotation.y = -0.05 * mouse.prev.x * (mouseSpeed * 0.1)
+
+    mesh.current.rotation.x =
+      0.0003 * rotSpeed.x * totalDelta + 0.0175 * rotAngle.x
+    mesh.current.rotation.y =
+      0.0003 * rotSpeed.y * totalDelta + 0.0175 * rotAngle.y
+    mesh.current.rotation.z =
+      0.0003 * rotSpeed.z * totalDelta + 0.0175 * rotAngle.z
+  }
+
+  useFrame((state, delta) => {
+    updateMouse(state)
+    animate(delta)
+    getFadeTime()
 
     state.gl.setRenderTarget(target)
     state.gl.clear()
@@ -538,19 +340,7 @@ const Scene = forwardRef(({ fps }, ref) => {
         position={[0, 0, 90]}
       />
 
-      {/* <OrthographicCamera
-        ref={cam}
-        makeDefault
-        manual
-        left={-1}
-        right={1}
-        top={1}
-        bottom={-1}
-        near={-1}
-        far={1}
-      /> */}
-
-      {/* mouse events don't fire within portal state (creates new state (?), so need to pass root state mouse values to portal) */}
+      {/* mouse events don't fire within portal state so need to pass root state mouse values */}
       {/* https://docs.pmnd.rs/react-three-fiber/tutorials/v8-migration-guide#createportal-creates-a-state-enclave */}
       {/* https://codesandbox.io/s/kp1w5u?file=/src/App.js */}
       {createPortal(
@@ -579,15 +369,10 @@ const Scene = forwardRef(({ fps }, ref) => {
             fragmentShader={fragmentPass}
             uniforms={uniforms}
             side={THREE.FrontSide}
-            wireframe={true}
+            wireframe={false}
           />
         </mesh>
       </group>
-
-      {/* <mesh>
-        <planeGeometry args={[2, 2]} />
-        <meshBasicMaterial map={blurTexture} />
-      </mesh> */}
     </>
   )
 })

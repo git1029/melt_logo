@@ -92,7 +92,7 @@ export default /* glsl */ `
     // float ny = cnoise(vUv * 10. + uTime * 0.1) * fy;
     float ny = (texture2D(uNoise, vUv).r * 2. - 1.) * fy * .5;
 
-    y += sin((x*2.-1.) * PI * (4. - uDistortion.y*0.) + sin((x*2.-1.)*8.-uTime*.25) + ny + uTime*.2) * pow(fy,2.) * 0.1 * uDistortion.y * 2.;
+    y += sin((x*2.-1.) * PI * (4. + (ny*2.-1.)*1. - uDistortion.y*0.) + sin((x*2.-1.)*8.-uTime*.25) + ny + uTime*.2) * pow(fy,2.) * 0.1 * uDistortion.y * 2.;
 
     vec2 aspectS = vec2(
       uResolution.x > uResolution.y ? uResolution.x / uResolution.y : 1., 

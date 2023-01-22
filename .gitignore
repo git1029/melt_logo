@@ -25,3 +25,6 @@ yarn-error.log*
 .prettierrc.json
 
 /noise.js
+
+.env
+/requests

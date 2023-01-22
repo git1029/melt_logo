@@ -8,7 +8,9 @@ import positionsFragmentShader from './shaders/positionsFragment.js'
 import vertexShader from './shaders/vertex.js'
 import fragmentShader from './shaders/fragment.js'
 
-import { easeInOutCubic } from '../utils.js'
+const easeInOutCubic = (t) => {
+  return t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1
+}
 
 const Trail = forwardRef(({ radius, decay, fps }, ref) => {
   const tmp = new THREE.Vector2()
@@ -61,7 +63,7 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
       data[i * 4 + 2] = i // index in datatexture
       data[i * 4 + 3] = 0
 
-      // Vertex shader will draw each vertice by order in position array
+      // Vertex shader will draw each vertex by order in position array
       // Want to draw point closest to mouse last so it is drawn on top (using transparency means z pos is ignored)
       // Therefore we draw position into array in reverse
       let i3 = (pointCount - i - 1) * 3 * 2
@@ -98,6 +100,7 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
       resolution: {
         value: new THREE.Vector2(size.width, size.height),
       },
+      uLength: { value: 0 },
     }
 
     const scene = new THREE.Scene()
@@ -124,7 +127,18 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
     return [fpsFactor]
   }, [fps])
 
-  const updatePoints = (mouse, delta) => {
+  const getLength = () => {
+    let length = 0
+    for (let i = 0; i < points.length - 1; i++) {
+      const p = points[i]
+      const q = points[i + 1]
+      length += tmp.set(q.x - p.x, q.y - p.y).length()
+    }
+
+    return length
+  }
+
+  const updatePoints = (mouse) => {
     // Couldn't move position update to GPU as points need to be updated serially rather than all at same time (as need next points updated position)
     // TO DO: consistent update across diff FPS
     for (let j = 0; j < pointCount / fpsFactor; j++) {
@@ -141,22 +155,6 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
         }
       }
     }
-    // // for (let j = 0; j < pointCount / 100; j++) {
-    // for (let i = 0; i < points.length; i++) {
-    //   if (i === 0) {
-    //     tmp.copy(mouse).sub(points[i])
-    //     points[i].add(tmp)
-    //   } else {
-    //     let t = i / points.length
-    //     t = easeInOutCubic(t)
-    //     t = THREE.MathUtils.mapLinear(t, 0, 1, 0.75, 0.5)
-    //     // t = 0.66
-    //     for (let j = 0; j < 2; j++) {
-    //       points[i].lerp(points[i - 1], t)
-    //     }
-    //   }
-    // }
-    // // }
 
     // update position datatexture
     for (let i = 0; i < pointCount; i++) {
@@ -166,36 +164,13 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
     }
     positionsTexture.needsUpdate = true
 
-    // Incorporate length to stop rendering maybe
-    // let length = 0
-    // for (let i = 0; i < points.length - 1; i++) {
-    //   const p = points[i]
-    //   const q = points[i + 1]
-    //   const v = new THREE.Vector2(q.x - p.x, q.y - p.y)
-    //   length += v.length()
-    // }
-
-    // // const threshold = 0.01;
-    // // if (this.length >= threshold && this.static) {
-    // //   this.static = false;
-    // //   this.fadeStartLast = this.fadeStart;
-    // //   this.fadeStart = clock.getElapsedTime();
-    // // }
-    // // if (this.length < threshold && !this.static) {
-    // //   this.static = true;
-    // //   this.fadeStartLast = this.fadeStart;
-    // //   this.fadeStart = clock.getElapsedTime();
-    // // }
-
-    // if (length > 0.01) {
-    //   updateGeometry()
-    // }
+    // ref.current.material.uniforms.uLength.value = getLength()
   }
 
   useEffect(() => {
     console.log('RENDER TRAIL')
     setLoaded(true)
-  })
+  }, [])
 
   const mouse = new THREE.Vector2()
   const mouseLast = new THREE.Vector2()
@@ -211,7 +186,8 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
 
       ref.current.material.uniforms.uDisplay.value = 1
 
-      setMousePoints(true) // shouldn't really mutate state in useFrame but this should only be run once
+      // shouldn't really mutate state in useFrame but this should only be run once
+      setMousePoints(true)
     }
 
     if (loaded) updatePoints(mouse, delta)
