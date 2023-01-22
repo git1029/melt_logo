@@ -16,7 +16,7 @@ import fragmentPass from './shaders/fragment'
 
 import meltLogo from '../assets/textures/melt_logo.png'
 // import meltLogoFade from '../assets/textures/melt_logo_fade.png'
-import warpedGlass from '../assets/models/warped_glass.obj'
+import refractionGeometry from '../assets/models/refraction_geometry.obj'
 
 import { blur } from '../../helpers/blurTexture'
 
@@ -33,44 +33,9 @@ const Scene = forwardRef(({ fps, controls }, ref) => {
 
   const [config, setConfig] = useState(defaultConfig)
   const useServerConfig = true
-  // const name = 'logo'
 
   useEffect(() => {
-    console.log('RENDER SCENE')
-    // if (!useServerConfig) {
-    //   // If not using server then load default local config if exists
-    //   // else use local config
-    //   const localConfig = JSON.parse(window.localStorage.getItem('melt_config'))
-    //   if (localConfig !== null && localConfig[name]) {
-    //     console.log('updateStore', localConfig[name])
-    //     updateStore(localConfig[name])
-    //   }
-
-    //   setConfig(defaultConfig)
-    //   return
-    // }
-
-    // const fetchConfig = async () => {
-    //   const serverConfig = await configService.getConfig()
-    //   const config = serverConfig[name]
-
-    //   // localStorage config (if exists) can take precedence over server config
-    //   // if same values result will be same anyway, if diff then want localstorage
-    //   if (controls) {
-    //     const localConfig = JSON.parse(
-    //       window.localStorage.getItem('melt_config')
-    //     )
-    //     if (localConfig !== null && localConfig[name]) {
-    //       updateStore(localConfig[name])
-    //     } else {
-    //       updateStore(config)
-    //     }
-    //   }
-
-    //   // still want to use server config as base state config
-    //   setConfig(config)
-    // }
-    // fetchConfig()
+    // console.log('RENDER SCENE')
     setupConfig(
       'logo',
       defaultConfig,
@@ -97,8 +62,8 @@ const Scene = forwardRef(({ fps, controls }, ref) => {
   const texture = useTexture(
     upload === undefined || upload === null ? meltLogo : upload
   )
-  const glass = useLoader(OBJLoader, warpedGlass)
-  const geometry = glass.children[0].geometry
+  const loadedModel = useLoader(OBJLoader, refractionGeometry)
+  const geometry = loadedModel.children[0].geometry
 
   // https://github.com/pmndrs/drei#usefbo
   // https://codesandbox.io/s/devto-2-3rv9rf?file=/src/App.js:1022-1068

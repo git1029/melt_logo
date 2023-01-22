@@ -32,7 +32,7 @@ export const setupConfig = (
     if (controls) {
       const localConfig = JSON.parse(window.localStorage.getItem('melt_config'))
       if (localConfig !== null && localConfig[name]) {
-        console.log('updateStore', localConfig[name])
+        // console.log('updateStore', localConfig[name])
         updateStore(localConfig[name])
       } else {
         updateStore(config)

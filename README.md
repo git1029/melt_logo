@@ -40,7 +40,8 @@ const App = () => {
     <td valign="top">
     react ref to pass scroll events for transition effect
     </td>
-    <td valign="top"></td>
+    <td valign="top">
+    <code>null</code></td>
   <tr>
 </table>
 
@@ -48,25 +49,24 @@ const App = () => {
 
 ```json
 {
-  "config": {
-    "displacementStrength": 1,
-    "displacementRadius": 1,
-    "displacementDecay": 0.5,
-    "colorNoise": 1,
-    "colorShift": 1,
-    "refractionRatio": 17,
-    "mouseSpeed": 20,
-    "mouseArea": 0.1,
-    "rotAngle": {
-      "x": 90,
-      "y": 50,
-      "z": 145
-    },
-    "rotSpeed": {
-      "x": -9,
-      "y": -3,
-      "z": 3
-    }
+  "id": "abcdef123456789",
+  "displacementStrength": 1,
+  "displacementRadius": 1,
+  "displacementDecay": 0.5,
+  "colorNoise": 1,
+  "colorShift": 1,
+  "refractionRatio": 17,
+  "mouseSpeed": 20,
+  "mouseArea": 0.1,
+  "rotAngle": {
+    "x": 90,
+    "y": 50,
+    "z": 145
+  },
+  "rotSpeed": {
+    "x": -9,
+    "y": -3,
+    "z": 3
   }
 }
 ```
@@ -114,17 +114,16 @@ const App = () => {
 
 ```json
 {
-  "config": {
-    "lineCount": 20,
-    "lineSpeed": 1,
-    "lineWidth": 0.5,
-    "lineDistortion": 0.5,
-    "lineColor": "#ffffff",
-    "colorShift": 0.5,
-    "imageStrength": 0.5,
-    "mouseEnabled": true,
-    "mouseStrength": 1
-  }
+  "id": "abcdef123456789",
+  "lineCount": 20,
+  "lineSpeed": 1,
+  "lineWidth": 0.5,
+  "lineDistortion": 0.5,
+  "lineColor": "#ffffff",
+  "colorShift": 0.5,
+  "imageStrength": 0.5,
+  "mouseEnabled": true,
+  "mouseStrength": 1
 }
 ```
 
