@@ -33,7 +33,7 @@ export const useLeva = (
       updateBlurStrength(store.data['image.blurStrength'].value)
   }, [])
 
-  const { image, upload } = useControls(
+  const { image, uploadWaterfall } = useControls(
     {
       image: folder(
         {
@@ -41,7 +41,8 @@ export const useLeva = (
             options: imageOptions,
             order: -4,
           },
-          upload: {
+          uploadWaterfall: {
+            label: 'upload',
             image: null,
             order: -3,
           },
@@ -171,5 +172,5 @@ export const useLeva = (
     [changes, config]
   )
 
-  return { image, upload, updateStore }
+  return { image, upload: uploadWaterfall, updateStore }
 }

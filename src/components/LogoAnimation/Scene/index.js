@@ -35,7 +35,7 @@ const Scene = forwardRef(({ fps, controls }, ref) => {
   const useServerConfig = true
 
   useEffect(() => {
-    // console.log('RENDER SCENE')
+    console.log('RENDER SCENE')
     setupConfig(
       'logo',
       defaultConfig,
