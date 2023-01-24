@@ -2,8 +2,39 @@ import * as THREE from 'three'
 import { HorizontalBlurShader } from 'three/examples/jsm/shaders/HorizontalBlurShader'
 import { VerticalBlurShader } from 'three/examples/jsm/shaders/VerticalBlurShader'
 
+const getBlurImage = (renderer, renderTarget, size, camera, name) => {
+  const buffer = new Uint8Array(size * size * 4)
+  renderer.readRenderTargetPixels(renderTarget, 0, 0, size, size, buffer)
+
+  const dataTexture = new THREE.DataTexture(buffer, size, size)
+  dataTexture.needsUpdate = true
+
+  const r = new THREE.WebGLRenderer()
+  r.setSize(size, size)
+  r.setClearColor(0x000000)
+
+  const scene = new THREE.Scene()
+  scene.background = dataTexture
+  r.render(scene, camera)
+  const imgData = r.domElement.toDataURL('image/png')
+  const a = document.createElement('a')
+  a.href = imgData
+  const timestamp = new Date(Date.now()).toISOString()
+  a.setAttribute('download', `melt_${name}_blur_${timestamp}.png`)
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  r.dispose()
+}
+
 // Performs a gaussian blur on input texture and returns blurred texture
-export const blur = (renderer, blurTextureSize, blurStrength, texture) => {
+export const blur = (
+  renderer,
+  blurTextureSize,
+  blurStrength,
+  texture,
+  name = ''
+) => {
   if (blurStrength === 0) return texture
 
   console.log('Generating blur texture')
@@ -35,6 +66,7 @@ export const blur = (renderer, blurTextureSize, blurStrength, texture) => {
     new THREE.PlaneGeometry(2, 2),
     new THREE.ShaderMaterial(VerticalBlurShader)
   )
+
   planeA.material.uniforms.h.value = 1 / size
   planeB.material.uniforms.v.value = 1 / size
 
@@ -66,6 +98,14 @@ export const blur = (renderer, blurTextureSize, blurStrength, texture) => {
   planeB.material.dispose()
   sceneBlurA.remove(planeA)
   sceneBlurB.remove(planeB)
+
+  // const blurImage = getBlurImage(
+  //   renderer,
+  //   renderTargetB,
+  //   size,
+  //   cameraBlur,
+  //   name
+  // )
 
   return renderTargetB.texture
 }

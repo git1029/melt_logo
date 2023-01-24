@@ -61,7 +61,7 @@ const Scene = ({ controls }) => {
   // Only run on load or if new image uploaded (debug mode only)
   // On live site should be a pre-made texture uploaded
   const blurTexture = useMemo(() => {
-    const blurTexture = blur(gl, 1024, blurStrength, texture)
+    const blurTexture = blur(gl, 1024, blurStrength, texture, 'waterfall')
 
     return blurTexture
   }, [texture, blurStrength])
