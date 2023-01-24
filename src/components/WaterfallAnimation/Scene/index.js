@@ -52,10 +52,21 @@ const Scene = ({ controls }) => {
     [mesh, updateBlurStrength, imageOptions]
   )
 
-  const [texture, noiseTexture] = useTexture([
-    upload === undefined || upload === null ? image : upload,
-    noise,
-  ])
+  // Set texture source if upload/image undefined (if controls disabled)
+  // TODO: add API get texture from server
+  const textureSource = () => {
+    if (upload !== undefined && upload !== null) {
+      return upload
+    }
+
+    if (image !== undefined && image !== null) {
+      return image
+    }
+
+    return smiley
+  }
+
+  const [texture, noiseTexture] = useTexture([textureSource(), noise])
 
   // Get blurred image for color effect
   // Only run on load or if new image uploaded (debug mode only)
