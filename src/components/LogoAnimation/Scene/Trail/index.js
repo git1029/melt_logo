@@ -127,16 +127,16 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
     return [fpsFactor]
   }, [fps])
 
-  const getLength = () => {
-    let length = 0
-    for (let i = 0; i < points.length - 1; i++) {
-      const p = points[i]
-      const q = points[i + 1]
-      length += tmp.set(q.x - p.x, q.y - p.y).length()
-    }
+  // const getLength = () => {
+  //   let length = 0
+  //   for (let i = 0; i < points.length - 1; i++) {
+  //     const p = points[i]
+  //     const q = points[i + 1]
+  //     length += tmp.set(q.x - p.x, q.y - p.y).length()
+  //   }
 
-    return length
-  }
+  //   return length
+  // }
 
   const updatePoints = (mouse) => {
     // Couldn't move position update to GPU as points need to be updated serially rather than all at same time (as need next points updated position)
@@ -168,7 +168,7 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
   }
 
   useEffect(() => {
-    console.log('RENDER TRAIL')
+    // console.log('RENDER TRAIL')
     setLoaded(true)
   }, [])
 
@@ -245,5 +245,7 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
     </>
   )
 })
+
+Trail.displayName = 'Trail'
 
 export default Trail

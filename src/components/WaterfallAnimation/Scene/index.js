@@ -1,10 +1,9 @@
-import { useEffect, useRef, useMemo, useState } from 'react'
+import { useEffect, useRef, useMemo } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
 import { OrthographicCamera, useTexture } from '@react-three/drei'
 
-import defaultConfig from '../config/config.json'
-import { setupConfig } from '../../helpers/LevaControls/setupConfig'
+import { getLocalStorageConfig } from '../../helpers/LevaControls/setupConfig'
 import { useLeva } from '../config/controls'
 
 import vertexShader from './shaders/vertex'
@@ -14,50 +13,40 @@ import meltLogo from '../assets/textures/melt_logo.png'
 import smiley from '../assets/textures/smiley.png'
 import noise from '../assets/textures/noise.png'
 
-import { blur } from '../../helpers/blurTexture'
+// import { blur } from '../../helpers/blurTexture'
 
-const Scene = ({ controls }) => {
+const Scene = ({ controls, config, updateConfig }) => {
   const mesh = useRef()
 
-  const [blurStrength, setBlurStrength] = useState(2)
-  const updateBlurStrength = (value) => setBlurStrength(value)
+  // const [blurStrength, setBlurStrength] = useState(2)
+  // const updateBlurStrength = (value) => setBlurStrength(value)
 
   const imageOptions = { smiley, melt: meltLogo }
 
-  const { gl, size, viewport } = useThree()
-
-  // const config = defaultConfig
-  const [config, setConfig] = useState(defaultConfig)
-  const useServerConfig = true
+  const { size, viewport } = useThree()
 
   useEffect(() => {
-    console.log('RENDER SCENE')
-    setupConfig(
-      'waterfall',
-      defaultConfig,
-      useServerConfig,
-      updateConfig,
-      updateStore,
-      controls
-    )
-  }, [])
+    // console.log('RENDER SCENE')
 
-  const updateConfig = (newConfig) => setConfig(newConfig)
+    updateStore(config)
+    if (controls) {
+      const localStorageConfig = getLocalStorageConfig('waterfall')
+      if (localStorageConfig) updateStore(localStorageConfig)
+    }
+  }, [controls])
 
-  const { image, upload, updateStore } = useLeva(
-    controls,
-    config,
-    updateConfig,
-    useServerConfig,
-    [mesh, updateBlurStrength, imageOptions]
-  )
+  const { image, updateStore } = useLeva(controls, config, updateConfig, [
+    mesh,
+    // updateBlurStrength,
+    imageOptions,
+  ])
 
   // Set texture source if upload/image undefined (if controls disabled)
   // TODO: add API get texture from server
   const textureSource = () => {
-    if (upload !== undefined && upload !== null) {
-      return upload
-    }
+    // if (upload !== undefined && upload !== null) {
+    //   return upload
+    // }
 
     if (image !== undefined && image !== null) {
       return image
@@ -68,14 +57,18 @@ const Scene = ({ controls }) => {
 
   const [texture, noiseTexture] = useTexture([textureSource(), noise])
 
-  // Get blurred image for color effect
-  // Only run on load or if new image uploaded (debug mode only)
-  // On live site should be a pre-made texture uploaded
-  const blurTexture = useMemo(() => {
-    const blurTexture = blur(gl, 1024, blurStrength, texture, 'waterfall')
+  // // Get blurred image for color effect
+  // // Only run on load or if new image uploaded (debug mode only)
+  // // On live site should be a pre-made texture uploaded
+  // const blurTexture = useMemo(() => {
+  //   let blurTexture = texture
 
-    return blurTexture
-  }, [texture, blurStrength])
+  //   // if (controls) {
+  //   //   blurTexture = blur(gl, 1024, blurStrength, texture, 'waterfall')
+  //   // }
+
+  //   return blurTexture
+  // }, [controls, texture, blurStrength])
 
   const [uniforms, mouse] = useMemo(() => {
     const {
@@ -91,10 +84,9 @@ const Scene = ({ controls }) => {
     } = config
 
     const mouse = new THREE.Vector2()
-    // const distance = new THREE.Vector2()
 
     const uniforms = {
-      uImage: { value: blurTexture },
+      uImage: { value: texture },
       uColor: { value: new THREE.Color(lineColor) },
       uTime: { value: 0 },
       uResolution: {
@@ -120,10 +112,33 @@ const Scene = ({ controls }) => {
     return [uniforms, mouse]
   }, [])
 
+  // const updateUniforms = () => {
+  //   uniforms.uColor.value = new THREE.Color(config.lineColor)
+  //   uniforms.uLine.value.x = config.lineCount
+  //   uniforms.uLine.value.y = config.lineSpeed
+  //   uniforms.uLine.value.z = config.lineWidth
+  //   uniforms.uLine.value.w = config.colorShift
+  //   uniforms.uDistortion.value.x = config.imageStrength
+  //   uniforms.uDistortion.value.y = config.lineDistortion
+  //   uniforms.uDistortion.value.z = config.mouseEnabled
+  //   uniforms.uDistortion.value.w = config.mouseStrength
+  // }
+
+  // // Need to update
+  // useEffect(() => {
+  //   console.log('updating uniforms')
+  //   updateUniforms()
+  // }, [controls])
+
+  // useEffect(() => {
+  //   mesh.current.material.uniforms.uImage.value = blurTexture
+  //   mesh.current.material.needsUpdate = true
+  // }, [blurTexture])
+
   useEffect(() => {
-    mesh.current.material.uniforms.uImage.value = blurTexture
+    mesh.current.material.uniforms.uImage.value = texture
     mesh.current.material.needsUpdate = true
-  }, [blurTexture])
+  }, [texture])
 
   // Update resolution uniform on viewport resize
   useEffect(() => {

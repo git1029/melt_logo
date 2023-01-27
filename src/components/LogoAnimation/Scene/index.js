@@ -1,12 +1,10 @@
-import { useState, useEffect, useRef, useMemo, forwardRef } from 'react'
+import { useEffect, useRef, useMemo, forwardRef } from 'react'
 import * as THREE from 'three'
 import { useFrame, useThree, createPortal, useLoader } from '@react-three/fiber'
 import { useFBO, useTexture, PerspectiveCamera } from '@react-three/drei'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 
-import defaultConfig from '../config/config.json'
-import { setupConfig } from '../../helpers/LevaControls/setupConfig'
-// import configService from '../../../services/configService'
+import { getLocalStorageConfig } from '../../helpers/LevaControls/setupConfig'
 import { useLeva } from '../config/controls'
 
 import Trail from './Trail'
@@ -15,53 +13,50 @@ import vertexPass from './shaders/vertex'
 import fragmentPass from './shaders/fragment'
 
 import meltLogo from '../assets/textures/melt_logo.png'
-// import meltLogoFade from '../assets/textures/melt_logo_fade.png'
+import meltLogoFade from '../assets/textures/melt_logo_fade.png'
 import refractionGeometry from '../assets/models/refraction_geometry.obj'
 
-import { blur } from '../../helpers/blurTexture'
+// import { blur } from '../../helpers/blurTexture'
 
 // https://eriksachse.medium.com/react-three-fiber-custom-postprocessing-render-target-solution-without-using-the-effectcomposer-d3a94e6ae3c3
 
-const Scene = forwardRef(({ fps, controls }, ref) => {
+const Scene = forwardRef(({ fps, controls, config, updateConfig }, ref) => {
   const cam = useRef()
   const mesh = useRef()
   const trail = useRef()
   const group = useRef()
 
-  const three = useThree()
-  const { size, viewport, gl } = three
+  // const [blurStrength, setBlurStrength] = useState(2)
+  // const updateBlurStrength = (value) => setBlurStrength(value)
 
-  const [config, setConfig] = useState(defaultConfig)
-  const useServerConfig = true
+  const three = useThree()
+  const { size, viewport } = three
 
   useEffect(() => {
-    console.log('RENDER SCENE')
-    setupConfig(
-      'logo',
-      defaultConfig,
-      useServerConfig,
-      updateConfig,
-      updateStore,
-      controls
-    )
-  }, [])
+    // console.log('RENDER SCENE')
 
-  const updateConfig = (newConfig) => setConfig(newConfig)
+    updateStore(config)
+
+    if (controls) {
+      const localStorageConfig = getLocalStorageConfig('logo')
+      if (localStorageConfig) updateStore(localStorageConfig)
+    }
+  }, [controls])
 
   const {
-    upload,
+    // upload,
     mouseArea,
     refractionRatio,
     mouseSpeed,
     rotAngle,
     rotSpeed,
     updateStore,
-  } = useLeva(controls, config, updateConfig, useServerConfig, [mesh, trail])
+  } = useLeva(controls, config, updateConfig, [mesh, trail])
 
-  // const [logoTexture, logoTextureC] = useTexture([meltLogo, meltLogoFade])
-  const texture = useTexture(
-    upload === undefined || upload === null ? meltLogo : upload
-  )
+  const [texture, logoTextureC] = useTexture([meltLogo, meltLogoFade])
+  // const texture = useTexture(
+  //   upload === undefined || upload === null ? meltLogo : upload
+  // )
   const loadedModel = useLoader(OBJLoader, refractionGeometry)
   const geometry = loadedModel.children[0].geometry
 
@@ -109,8 +104,8 @@ const Scene = forwardRef(({ fps, controls }, ref) => {
       },
       uScene: { value: target.texture },
       uLogo: { value: texture },
-      // uLogoC: { value: logoTextureC },
-      uLogoC: { value: null },
+      uLogoC: { value: logoTextureC },
+      // uLogoC: { value: null },
       uShowMouse: { value: false },
       uNormal: { value: false },
       uTransition: { value: new THREE.Vector4(0, 0, -10, -10) },
@@ -134,16 +129,16 @@ const Scene = forwardRef(({ fps, controls }, ref) => {
     return [scene, uniforms, camera, mouse]
   }, [])
 
-  // Get blurred image for color effect
-  // Only run on load or if new image uploaded (debug mode only)
-  // On live site should be a pre-made texture uploaded
-  useEffect(() => {
-    // console.log(upload)
-    const blurTexture = blur(gl, 1024, 20, texture)
+  // // Get blurred image for color effect
+  // // Only run on load or if new image uploaded (debug mode only)
+  // // On live site should be a pre-made texture uploaded
+  // useEffect(() => {
+  //   // console.log(upload)
+  //   const blurTexture = blur(gl, 1024, 20, texture)
 
-    uniforms.uLogo.value = texture
-    uniforms.uLogoC.value = blurTexture
-  }, [texture])
+  //   uniforms.uLogo.value = texture
+  //   uniforms.uLogoC.value = blurTexture
+  // }, [texture])
 
   // Handle viewport changes
   useEffect(() => {
@@ -220,8 +215,8 @@ const Scene = forwardRef(({ fps, controls }, ref) => {
     const uTime = mesh.current.material.uniforms.uTime.value
 
     if (
-      (uFade.x == 0 && uFade.z == -10 && uFade.w == -10) ||
-      uFade.z == uFade.w
+      (uFade.x === 0 && uFade.z === -10 && uFade.w === -10) ||
+      uFade.z === uFade.w
     )
       return 0
 
@@ -232,7 +227,7 @@ const Scene = forwardRef(({ fps, controls }, ref) => {
 
     if (uFade.z - uFade.w < fd && uTime - uFade.z < fd) {
       let ts0 = uFadeLast
-      if (uFade.x == 0) {
+      if (uFade.x === 0) {
         let fd0 = ts0 * fd
         if (uTime < fs) ft = ts0
         else if (uTime < fs + fd0)
@@ -250,7 +245,7 @@ const Scene = forwardRef(({ fps, controls }, ref) => {
       if (uTime < fs) ft = 0
       else if (uTime < fe) ft = THREE.MathUtils.mapLinear(uTime, fs, fe, 0, 1)
       else ft = 1
-      if (uFade.x == 0) ft = 1 - ft
+      if (uFade.x === 0) ft = 1 - ft
     }
 
     mesh.current.material.uniforms.uTransition.value.y = ft
@@ -341,5 +336,7 @@ const Scene = forwardRef(({ fps, controls }, ref) => {
     </>
   )
 })
+
+Scene.displayName = 'Scene'
 
 export default Scene

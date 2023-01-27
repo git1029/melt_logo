@@ -2,24 +2,11 @@ import { useState } from 'react'
 import { useControls, folder } from 'leva'
 import { useLevaHelpers } from '../../helpers/LevaControls/levaHelpers'
 
-export const useLeva = (
-  controls,
-  config,
-  updateConfig,
-  server,
-  dependencies
-) => {
-  // If animation does not use controls return local/API config
-  if (!controls) {
-    return config
-  }
-
-  // console.log('---useLeva config:', config)
-
+export const useLeva = (controls, config, updateConfig, dependencies) => {
   const [mesh, trail] = dependencies
 
   const [changes, setChanges] = useState(false)
-  const { buttons, buttonsServer, updateStore } = useLevaHelpers(
+  const { buttons, updateStore } = useLevaHelpers(
     config,
     updateConfig,
     changes,
@@ -32,7 +19,7 @@ export const useLeva = (
   // Saving would send update request to config on server
 
   const {
-    uploadLogo,
+    // uploadLogo,
     mouseArea,
     refractionRatio,
     mouseSpeed,
@@ -40,15 +27,15 @@ export const useLeva = (
     rotSpeed,
   } = useControls(
     {
-      image: folder(
-        {
-          uploadLogo: {
-            label: 'upload',
-            image: null,
-          },
-        },
-        { order: -4 }
-      ),
+      // image: folder(
+      //   {
+      //     uploadLogo: {
+      //       label: 'upload',
+      //       image: null,
+      //     },
+      //   },
+      //   { order: -4 }
+      // ),
       displacement: folder(
         {
           displacementStrength: {
@@ -57,7 +44,7 @@ export const useLeva = (
             min: 0,
             max: 1,
             step: 0.1,
-            onChange: (v, path, { initial }) => {
+            onChange: (v) => {
               mesh.current.material.uniforms.uDisp.value.x = v
             },
           },
@@ -181,13 +168,13 @@ export const useLeva = (
         },
         { order: -1 }
       ),
-      controls: folder(server ? buttonsServer : buttons, { order: 10 }),
+      controls: folder(buttons, { order: 10 }),
     },
     [changes, config]
   )
 
   return {
-    upload: uploadLogo,
+    // upload: uploadLogo,
     mouseArea,
     refractionRatio,
     mouseSpeed,

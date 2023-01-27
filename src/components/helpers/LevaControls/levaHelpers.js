@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
-// import { useLocation } from 'react-router-dom'
 import { button, levaStore } from 'leva'
 import { downloadConfig } from './downloadConfig'
-import configService from '../../../services/configService'
+// import configService from '../../../services/configService'
 
 export const useLevaHelpers = (
   config,
@@ -20,14 +19,14 @@ export const useLevaHelpers = (
     if (localConfig === null) localConfig = {}
     if (localConfig[name] === undefined) localConfig[name] = {}
     const values = getStore()
-    // console.log('values', values)
     localConfig[name] = values
-    // console.log('----levaHelpers [store] updating localStorage', localConfig)
     window.localStorage.setItem('melt_config', JSON.stringify(localConfig))
   }
 
   useEffect(() => {
-    if (init === null) return
+    if (init === null) {
+      return
+    }
 
     const data = store.data
     const paths = Object.keys(data)
@@ -74,20 +73,18 @@ export const useLevaHelpers = (
     }
   }, [store, config])
 
-  const saveConfig = async () => {
-    const values = getStore()
-    const newConfig = {
-      fields: {
-        config: JSON.stringify(values),
-      },
-    }
+  // const saveConfig = async () => {
+  //   const values = getStore()
+  //   console.log(values)
 
-    // TODO: Add try/catch
-    const savedConfig = await configService.updateConfig(values.id, newConfig)
-    console.log('saved', savedConfig)
+  //   // Only send sub config (i.e. logo or waterfall)
 
-    updateConfig(values)
-  }
+  //   // // TODO: Add try/catch
+  //   const savedConfig = await configService.updateConfig(values)
+  //   console.log('saved', savedConfig)
+
+  //   updateConfig(values)
+  // }
 
   const resetStore = () => {
     const data = store.data
@@ -96,7 +93,7 @@ export const useLevaHelpers = (
     paths.forEach((path) => {
       const p = path.split('.').pop()
       if (config[p] !== undefined) {
-        // Reset to last saved config (server)
+        // Reset to last saved config
         levaStore.setValueAtPath(path, config[p])
       }
     })
@@ -109,6 +106,8 @@ export const useLevaHelpers = (
   }
 
   const getStore = () => {
+    // NB: store.data contains list of all leva control values (not grouped by logo/watefall mode)
+    // For this reason control names should also be unique across modes
     const data = store.data
     const keys = Object.keys(data)
     const newConfig = { ...config }
@@ -136,22 +135,17 @@ export const useLevaHelpers = (
       },
       { order: 2 }
     ),
-  }
-
-  const buttonsServer = {
-    ...buttons,
-    'save settings': button(
-      () => {
-        saveConfig()
-      },
-      { disabled: !changes, order: 3 }
-    ),
+    // 'save settings': button(
+    //   () => {
+    //     saveConfig()
+    //   },
+    //   { disabled: !changes, order: 3 }
+    // ),
   }
 
   return {
     store,
     updateStore,
     buttons,
-    buttonsServer,
   }
 }

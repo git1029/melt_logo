@@ -1,24 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Color } from 'three'
 import { useControls, folder } from 'leva'
 import { useLevaHelpers } from '../../helpers/LevaControls/levaHelpers'
 
-export const useLeva = (
-  controls,
-  config,
-  updateConfig,
-  server,
-  dependencies
-) => {
-  // If animation does not use controls return local/API config
-  if (!controls) {
-    return config
-  }
-
-  const [mesh, updateBlurStrength, imageOptions] = dependencies
+export const useLeva = (controls, config, updateConfig, dependencies) => {
+  const [mesh, imageOptions] = dependencies
 
   const [changes, setChanges] = useState(false)
-  const { buttons, buttonsServer, store, updateStore } = useLevaHelpers(
+  const { buttons, updateStore } = useLevaHelpers(
     config,
     updateConfig,
     changes,
@@ -26,14 +15,15 @@ export const useLeva = (
     'waterfall'
   )
 
-  // NB: Leva store is maintained until refresh even if component with Leva component is unmounted (i.e. on tab change between logo/waterfall animations). Inputs with same paths e.g. image.upload are shared, therefore uploaded image persists between tab change.
-  // blurStrength will only update in waterfall component state onEditEnd, onMount value will default to 2, instead check if cached value in Leva store and use that
-  useEffect(() => {
-    if (store.data['image.blurStrength'] !== undefined)
-      updateBlurStrength(store.data['image.blurStrength'].value)
-  }, [])
+  // // NB: Leva store is maintained until refresh even if component with Leva component is unmounted (i.e. on tab change between logo/waterfall animations). Inputs with same paths e.g. image.upload are shared, therefore uploaded image persists between tab change.
+  // // blurStrength will only update in waterfall component state onEditEnd, onMount value will default to 2, instead check if cached value in Leva store and use that
+  // useEffect(() => {
+  //   if (store.data['image.blurStrength'] !== undefined)
+  //     updateBlurStrength(store.data['image.blurStrength'].value)
+  // }, [])
 
-  const { image, uploadWaterfall } = useControls(
+  // const { image, uploadWaterfall } = useControls(
+  const { image } = useControls(
     {
       image: folder(
         {
@@ -41,22 +31,22 @@ export const useLeva = (
             options: imageOptions,
             order: -4,
           },
-          uploadWaterfall: {
-            label: 'upload',
-            image: null,
-            order: -3,
-          },
-          blurStrength: {
-            label: 'blur',
-            value: 2,
-            min: 0,
-            max: 20,
-            step: 1,
-            order: -2,
-            onEditEnd: (v) => {
-              updateBlurStrength(v)
-            },
-          },
+          // uploadWaterfall: {
+          //   label: 'upload',
+          //   image: null,
+          //   order: -3,
+          // },
+          // blurStrength: {
+          //   label: 'blur',
+          //   value: 2,
+          //   min: 0,
+          //   max: 20,
+          //   step: 1,
+          //   order: -2,
+          //   onEditEnd: (v) => {
+          //     updateBlurStrength(v)
+          //   },
+          // },
           imageStrength: {
             label: 'strength',
             value: config.imageStrength,
@@ -135,13 +125,14 @@ export const useLeva = (
       ),
       mouse: folder(
         {
-          mouseEnabled: {
-            label: 'enabled',
-            value: config.mouseEnabled,
-            onChange: (v) => {
-              mesh.current.material.uniforms.uDistortion.value.z = v
-            },
-          },
+          // mouseEnabled: {
+          //   label: 'enabled',
+          //   value: config.mouseEnabled,
+          //   onChange: (v) => {
+          //     mesh.current.material.uniforms.uDistortion.value.z = v
+          //     // updateLocalStorage()
+          //   },
+          // },
           mouseStrength: {
             label: 'strength',
             value: config.mouseStrength,
@@ -167,10 +158,11 @@ export const useLeva = (
         },
         { order: -1 }
       ),
-      controls: folder(server ? buttonsServer : buttons, { order: 10 }),
+      controls: folder(buttons, { order: 10 }),
     },
     [changes, config]
   )
 
-  return { image, upload: uploadWaterfall, updateStore }
+  // return { image, upload: uploadWaterfall, updateStore }
+  return { image: controls ? image : null, updateStore }
 }

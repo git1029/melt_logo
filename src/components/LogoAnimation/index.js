@@ -3,29 +3,28 @@ import { Canvas } from '@react-three/fiber'
 import { PerformanceMonitor } from '@react-three/drei'
 import LevaControls from '../helpers/LevaControls'
 import PerfMonitor from '../helpers/PerfMonitor'
-import { useToggleControls } from '../helpers/toggleControls'
 import Scene from './Scene'
+
+import { useConfig } from '../helpers/LevaControls/setupConfig'
+import { useToggleControls } from '../helpers/toggleControls'
 
 const glSettings = {
   antialias: false,
 }
 
 const created = ({ gl }) => {
-  console.log('Canvas ready')
   gl.domElement.id = 'logoAnimation'
 }
 
 const LogoAnimation = ({ controls, effectRef }) => {
   const [sceneFps, setSceneFps] = useState(60)
 
-  const toggleControls = useToggleControls(
-    controls === undefined ? false : controls
-  )
+  const [config, updateConfig] = useConfig('logo')
+  useToggleControls(controls === undefined ? false : controls)
 
   return (
     <>
-      {/* <LevaControls visible={controls && toggleControls} /> */}
-      {controls ? <LevaControls visible={toggleControls} /> : null}
+      {controls ? <LevaControls /> : null}
       <div
         style={{
           width: '100%',
@@ -37,11 +36,11 @@ const LogoAnimation = ({ controls, effectRef }) => {
         }}
       >
         <Canvas dpr={[1, 2]} gl={glSettings} onCreated={created}>
-          {/* <PerfMonitor visible={controls && toggleControls} /> */}
-          {controls ? <PerfMonitor visible={toggleControls} /> : null}
+          {controls ? <PerfMonitor /> : null}
 
           <PerformanceMonitor
-            onChange={({ fps, factor, refreshrate, frames, averages }) => {
+            onChange={({ fps }) => {
+              // { fps, factor, refreshrate, frames, averages }
               // onChange is triggered when factor [0,1] changes. Factor starts at 0.5 and increases/decreased by step based on calculated performance. Once reaches 1 it won't be called again until changes.
               // Get monitored FPS to nearest 10
               // If change send that to scene/trail - NB: will cause Trail re-render
@@ -56,6 +55,8 @@ const LogoAnimation = ({ controls, effectRef }) => {
             <Scene
               fps={sceneFps}
               controls={controls === undefined ? false : true}
+              config={config}
+              updateConfig={updateConfig}
               ref={effectRef}
             />
           </PerformanceMonitor>

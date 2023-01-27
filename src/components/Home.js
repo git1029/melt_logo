@@ -3,7 +3,7 @@ import { useFadeEffect } from './helpers/fadeEffect'
 import LogoAnimation from './LogoAnimation'
 import '../css/Home.css'
 
-const Home = () => {
+const Home = ({ controls }) => {
   const fadeInRef = useRef(null)
   const fadeInTriggerRef = useRef(null)
 
@@ -12,8 +12,8 @@ const Home = () => {
   // <LogoAnimation effectRef={effectRef} />
   const { effectRef, updateFadeEffect } = useFadeEffect()
 
-  const [backgroundColor, setBackgroundColor] = useState('#000000')
-  const [backgroundImage, setBackgroundImage] = useState('none')
+  const [backgroundColor] = useState('#000000')
+  const [backgroundImage] = useState('none')
 
   useEffect(() => {
     setTimeout(() => {
@@ -66,7 +66,7 @@ const Home = () => {
       />
       <div className="logo_knockout__holder fade-in-up-element">
         <div className="shrinker">
-          <LogoAnimation effectRef={effectRef} controls />
+          <LogoAnimation effectRef={effectRef} controls={controls} />
         </div>
       </div>
 

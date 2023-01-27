@@ -1,24 +1,33 @@
-import { useState, useEffect } from 'react'
+import { useLayoutEffect } from 'react'
 
 export const useToggleControls = (controls) => {
-  const [toggleControls, setToggleControls] = useState(true)
-
-  // NB: listeners are removed/added on every d/D keypress else handler loses scope and connection to state is lost
-  useEffect(() => {
+  useLayoutEffect(() => {
     const handleKeyPress = (e) => {
       if (!controls || document.activeElement !== document.body) return
 
       if (e.key === 'd' || e.key === 'D') {
-        setToggleControls(!toggleControls)
+        const leva = document.querySelector('.leva')
+        if (leva) {
+          leva.style.visibility =
+            leva.style.visibility === 'visible' ? 'hidden' : 'visible'
+        }
+
+        const perf = document.querySelector('.r3f-perf')
+        if (perf) {
+          perf.style.visibility =
+            perf.style.visibility === 'visible' ? 'hidden' : 'visible'
+        }
       }
     }
 
-    window.addEventListener('keydown', handleKeyPress)
+    if (controls) {
+      window.addEventListener('keydown', handleKeyPress)
+    }
 
     return () => {
-      window.removeEventListener('keydown', handleKeyPress)
+      if (controls) {
+        window.removeEventListener('keydown', handleKeyPress)
+      }
     }
-  })
-
-  return toggleControls
+  }, [controls])
 }
