@@ -6,6 +6,8 @@ import { useLevaHelpers } from '../../helpers/LevaControls/levaHelpers'
 export const useLeva = (controls, config, updateConfig, dependencies) => {
   const [mesh, imageOptions] = dependencies
 
+  // console.log('CONTROLS')
+
   const [changes, setChanges] = useState(false)
   const { buttons, updateStore } = useLevaHelpers(
     config,
@@ -165,4 +167,5 @@ export const useLeva = (controls, config, updateConfig, dependencies) => {
 
   // return { image, upload: uploadWaterfall, updateStore }
   return { image: controls ? image : null, updateStore }
+  // return { image: controls ? image : null }
 }

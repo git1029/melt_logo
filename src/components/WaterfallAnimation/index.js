@@ -5,6 +5,8 @@ import Scene from './Scene'
 
 import { useConfig } from '../helpers/LevaControls/setupConfig'
 import { useToggleControls } from '../helpers/toggleControls'
+// import { getLocalStorageConfig } from '../../helpers/LevaControls/setupConfig'
+// import { useEffect } from 'react'
 
 const glSettings = {
   antialias: false,

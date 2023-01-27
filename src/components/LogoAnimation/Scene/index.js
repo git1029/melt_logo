@@ -4,7 +4,7 @@ import { useFrame, useThree, createPortal, useLoader } from '@react-three/fiber'
 import { useFBO, useTexture, PerspectiveCamera } from '@react-three/drei'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 
-import { getLocalStorageConfig } from '../../helpers/LevaControls/setupConfig'
+// import { getLocalStorageConfig } from '../../helpers/LevaControls/setupConfig'
 import { useLeva } from '../config/controls'
 
 import Trail from './Trail'
@@ -32,16 +32,16 @@ const Scene = forwardRef(({ fps, controls, config, updateConfig }, ref) => {
   const three = useThree()
   const { size, viewport } = three
 
-  useEffect(() => {
-    // console.log('RENDER SCENE')
+  // useEffect(() => {
+  //   // console.log('RENDER SCENE')
 
-    updateStore(config)
+  //   updateStore(config)
 
-    if (controls) {
-      const localStorageConfig = getLocalStorageConfig('logo')
-      if (localStorageConfig) updateStore(localStorageConfig)
-    }
-  }, [controls])
+  //   if (controls) {
+  //     const localStorageConfig = getLocalStorageConfig('logo')
+  //     if (localStorageConfig) updateStore(localStorageConfig)
+  //   }
+  // }, [controls])
 
   const {
     // upload,
@@ -50,7 +50,7 @@ const Scene = forwardRef(({ fps, controls, config, updateConfig }, ref) => {
     mouseSpeed,
     rotAngle,
     rotSpeed,
-    updateStore,
+    // updateStore,
   } = useLeva(controls, config, updateConfig, [mesh, trail])
 
   const [texture, logoTextureC] = useTexture([meltLogo, meltLogoFade])
@@ -88,23 +88,27 @@ const Scene = forwardRef(({ fps, controls, config, updateConfig }, ref) => {
     const uniforms = {
       uTime: { value: 0 },
       uResolution: {
-        value: new THREE.Vector4(
-          size.width, // size = px units, viewport = three.js units
-          size.height,
-          texture.source.data.width,
-          texture.source.data.height
-        ),
+        // value: new THREE.Vector4(
+        //   size.width, // size = px units, viewport = three.js units
+        //   size.height,
+        //   texture.source.data.width,
+        //   texture.source.data.height
+        // ),
+        value: new THREE.Vector4(),
       },
       uDisp: {
-        value: new THREE.Vector3(
-          config.displacementStrength,
-          config.colorNoise,
-          config.colorShift
-        ),
+        // value: new THREE.Vector3(
+        //   config.displacementStrength,
+        //   config.colorNoise,
+        //   config.colorShift
+        // ),
+        value: new THREE.Vector3(1, 1, 1),
       },
       uScene: { value: target.texture },
-      uLogo: { value: texture },
-      uLogoC: { value: logoTextureC },
+      // uLogo: { value: texture },
+      // uLogoC: { value: logoTextureC },
+      uLogo: { value: null },
+      uLogoC: { value: null },
       // uLogoC: { value: null },
       uShowMouse: { value: false },
       uNormal: { value: false },
@@ -112,7 +116,8 @@ const Scene = forwardRef(({ fps, controls, config, updateConfig }, ref) => {
       PI: { value: Math.PI },
       // uMouse: { value: new THREE.Vector2() },
       refractionRatio: { value: 1 },
-      uDPR: { value: viewport.dpr },
+      // uDPR: { value: viewport.dpr },
+      uDPR: { value: 1 },
       uColor: { value: new THREE.Color(0x1b884b) },
       uFadeLast: { value: -10 },
     }
@@ -127,7 +132,37 @@ const Scene = forwardRef(({ fps, controls, config, updateConfig }, ref) => {
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1)
 
     return [scene, uniforms, camera, mouse]
-  }, [])
+  }, [target.texture])
+
+  useEffect(() => {
+    if (mesh.current && mesh.current.material) {
+      mesh.current.material.uniforms.uDPR.value = viewport.dpr
+      mesh.current.material.needsUpdate = true
+    }
+  }, [viewport])
+
+  useEffect(() => {
+    const { displacementStrength, colorNoise, colorShift } = config
+
+    if (mesh.current && mesh.current.material) {
+      mesh.current.material.uniforms.uDisp.value.x = displacementStrength
+      mesh.current.material.uniforms.uDisp.value.y = colorNoise
+      mesh.current.material.uniforms.uDisp.value.z = colorShift
+
+      mesh.current.material.needsUpdate = true
+    }
+  }, [config])
+
+  useEffect(() => {
+    if (mesh.current && mesh.current.material) {
+      mesh.current.material.uniforms.uLogo.value = texture
+      mesh.current.material.uniforms.uLogoC.value = logoTextureC
+      mesh.current.material.uniforms.uResolution.value.z = texture.width
+      mesh.current.material.uniforms.uResolution.value.w = texture.height
+
+      mesh.current.material.needsUpdate = true
+    }
+  }, [texture, logoTextureC])
 
   // // Get blurred image for color effect
   // // Only run on load or if new image uploaded (debug mode only)
@@ -143,9 +178,15 @@ const Scene = forwardRef(({ fps, controls, config, updateConfig }, ref) => {
   // Handle viewport changes
   useEffect(() => {
     // Update resolution uniform
+    // console.log('set size')
     if (mesh.current && mesh.current.material) {
       mesh.current.material.uniforms.uResolution.value.x = size.width
       mesh.current.material.uniforms.uResolution.value.y = size.height
+    }
+
+    if (trail.current && trail.current.material) {
+      trail.current.material.uniforms.uResolution.value.x = size.width
+      trail.current.material.uniforms.uResolution.value.y = size.height
     }
 
     // Update camera position for narrow and tall screens
@@ -159,7 +200,7 @@ const Scene = forwardRef(({ fps, controls, config, updateConfig }, ref) => {
       )
       cam.current.updateProjectionMatrix()
     }
-  }, [viewport])
+  }, [size])
 
   const updateMouseMovement = () => {
     let a = {
@@ -305,8 +346,8 @@ const Scene = forwardRef(({ fps, controls, config, updateConfig }, ref) => {
       {/* https://codesandbox.io/s/kp1w5u?file=/src/App.js */}
       {createPortal(
         <Trail
-          radius={config.displacementRadius}
-          decay={config.displacementDecay}
+          // radius={config.displacementRadius}
+          // decay={config.displacementDecay}
           fps={fps}
           ref={trail}
         />,

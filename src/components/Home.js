@@ -30,7 +30,7 @@ const Home = ({ controls }) => {
     })
 
     observer.observe(fadeInRef.current)
-  }, [])
+  }, [updateFadeEffect])
 
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
@@ -45,7 +45,7 @@ const Home = ({ controls }) => {
     })
 
     observer.observe(fadeInTriggerRef.current)
-  }, [])
+  }, [updateFadeEffect])
 
   return (
     <div

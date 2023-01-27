@@ -2,7 +2,7 @@ export default /* glsl */ `
   uniform sampler2D positions;
   uniform float uTime;
   uniform float uSize;
-  uniform vec2 resolution;
+  uniform vec2 uResolution;
   uniform vec4 uInfo; // vec4(count, strokeweight, radius, decay)
   uniform float uDisplay;
   
@@ -60,7 +60,7 @@ export default /* glsl */ `
     vec3 next = texture2D(positions, nUv).rgb;
     vec3 prev = texture2D(positions, pUv).rgb;
 
-    vec2 aspect = vec2(resolution.x / resolution.y, 1);
+    vec2 aspect = vec2(uResolution.x / uResolution.y, 1);
     vec2 nextScreen = next.xy * aspect;
     vec2 prevScreen = prev.xy * aspect;
 

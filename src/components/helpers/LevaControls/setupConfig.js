@@ -7,6 +7,7 @@ import defaultConfig from './config.json'
 // }
 
 export const useConfig = (name) => {
+  // console.log('USECONFIG')
   const baseConfig = getConfig(name, defaultConfig[name])
   const [config, setConfig] = useState(baseConfig)
   const updateConfig = (newConfig) => setConfig(newConfig)
@@ -23,7 +24,7 @@ export const getLocalStorageConfig = (name) => {
   return null
 }
 
-export const getConfig = (name, defaultConfig) => {
+export const getConfig = (name) => {
   // Default all users -> read from snippet
   // To split snippets into logo/waterfall or keep as one?
 
@@ -44,7 +45,7 @@ export const getConfig = (name, defaultConfig) => {
     // else return default
     // console.log('default', defaultConfig)
     // NB: don't need to update store here as store will use defaultConfig to initialize
-    return defaultConfig
+    return defaultConfig[name]
   }
 }
 

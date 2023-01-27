@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { useMemo, useState, forwardRef, useEffect } from 'react'
-import { createPortal, useFrame, useThree } from '@react-three/fiber'
+import { createPortal, useFrame } from '@react-three/fiber'
 import { useFBO } from '@react-three/drei'
 
 import positionsVertexShader from './shaders/positionsVertex.js'
@@ -12,10 +12,10 @@ const easeInOutCubic = (t) => {
   return t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1
 }
 
-const Trail = forwardRef(({ radius, decay, fps }, ref) => {
+const Trail = forwardRef(({ fps }, ref) => {
   const tmp = new THREE.Vector2()
 
-  const { size } = useThree()
+  // const { size } = useThree()
 
   const [loaded, setLoaded] = useState(false)
   const [mousePoints, setMousePoints] = useState(false)
@@ -91,14 +91,17 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
       positions: { value: positionsTexture },
     }
 
+    // const { width, height } = size
+
     const trailUniforms = {
       positions: { value: null },
       uTime: { value: 0 },
       uSize: { value: targetSize },
-      uInfo: { value: new THREE.Vector4(pointCount, 200, radius, decay) },
+      uInfo: { value: new THREE.Vector4(pointCount, 200, 1, 0.5) },
       uDisplay: { value: 0 },
-      resolution: {
-        value: new THREE.Vector2(size.width, size.height),
+      uResolution: {
+        // value: new THREE.Vector2(width, height),
+        value: new THREE.Vector2(),
       },
       uLength: { value: 0 },
     }
@@ -117,7 +120,7 @@ const Trail = forwardRef(({ radius, decay, fps }, ref) => {
       scene,
       camera,
     ]
-  }, [])
+  }, [targetSize])
 
   const [fpsFactor] = useMemo(() => {
     const fpsFactor = Math.floor(

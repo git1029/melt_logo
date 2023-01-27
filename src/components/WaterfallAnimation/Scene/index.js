@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import { useFrame, useThree } from '@react-three/fiber'
 import { OrthographicCamera, useTexture } from '@react-three/drei'
 
-import { getLocalStorageConfig } from '../../helpers/LevaControls/setupConfig'
+// import { getLocalStorageConfig } from '../../helpers/LevaControls/setupConfig'
 import { useLeva } from '../config/controls'
 
 import vertexShader from './shaders/vertex'
@@ -23,19 +23,20 @@ const Scene = ({ controls, config, updateConfig }) => {
 
   const imageOptions = { smiley, melt: meltLogo }
 
-  const { size, viewport } = useThree()
+  const { size } = useThree()
 
-  useEffect(() => {
-    // console.log('RENDER SCENE')
+  // useEffect(() => {
+  //   // console.log('RENDER SCENE')
 
-    updateStore(config)
-    if (controls) {
-      const localStorageConfig = getLocalStorageConfig('waterfall')
-      if (localStorageConfig) updateStore(localStorageConfig)
-    }
-  }, [controls])
+  //   updateStore(config)
 
-  const { image, updateStore } = useLeva(controls, config, updateConfig, [
+  //   if (controls) {
+  //     const localStorageConfig = getLocalStorageConfig('waterfall')
+  //     if (localStorageConfig) updateStore(localStorageConfig)
+  //   }
+  // }, [controls])
+
+  const { image } = useLeva(controls, config, updateConfig, [
     mesh,
     // updateBlurStrength,
     imageOptions,
@@ -55,7 +56,9 @@ const Scene = ({ controls, config, updateConfig }) => {
     return smiley
   }
 
-  const [texture, noiseTexture] = useTexture([textureSource(), noise])
+  const texture = useTexture(textureSource())
+  // NB: split noiseTexture else any textureSource change will reload noiseTexture (which will create new uniform)
+  const noiseTexture = useTexture(noise)
 
   // // Get blurred image for color effect
   // // Only run on load or if new image uploaded (debug mode only)
@@ -71,6 +74,52 @@ const Scene = ({ controls, config, updateConfig }) => {
   // }, [controls, texture, blurStrength])
 
   const [uniforms, mouse] = useMemo(() => {
+    // const {
+    //   lineCount,
+    //   lineSpeed,
+    //   lineWidth,
+    //   lineDistortion,
+    //   lineColor,
+    //   colorShift,
+    //   mouseEnabled,
+    //   mouseStrength,
+    //   imageStrength,
+    // } = config
+
+    const mouse = new THREE.Vector2()
+
+    const uniforms = {
+      uImage: { value: null },
+      // uColor: { value: new THREE.Color(lineColor) },
+      uColor: { value: new THREE.Color(0xffffff) },
+      uTime: { value: 0 },
+      uResolution: {
+        value: new THREE.Vector4(0, 0, 1024, 1024),
+      },
+      PI: { value: Math.PI },
+      uLine: {
+        // value: new THREE.Vector4(lineCount, lineSpeed, lineWidth, colorShift),
+        value: new THREE.Vector4(20, 1, 0.5, 0.5),
+      },
+      uDistortion: {
+        // value: new THREE.Vector4(
+        //   imageStrength,
+        //   lineDistortion,
+        //   mouseEnabled,
+        //   mouseStrength
+        // ),
+        value: new THREE.Vector4(0.5, 0.5, true, 1),
+      },
+      uMouse: { value: mouse },
+      // uNoise: { value: noiseTexture },
+      uNoise: { value: null },
+      // uDist: { value: distance },
+    }
+
+    return [uniforms, mouse]
+  }, [])
+
+  useEffect(() => {
     const {
       lineCount,
       lineSpeed,
@@ -83,57 +132,30 @@ const Scene = ({ controls, config, updateConfig }) => {
       imageStrength,
     } = config
 
-    const mouse = new THREE.Vector2()
+    mesh.current.material.uniforms.uLine.value.x = lineCount
+    mesh.current.material.uniforms.uLine.value.y = lineSpeed
+    mesh.current.material.uniforms.uLine.value.z = lineWidth
+    mesh.current.material.uniforms.uLine.value.w = colorShift
 
-    const uniforms = {
-      uImage: { value: texture },
-      uColor: { value: new THREE.Color(lineColor) },
-      uTime: { value: 0 },
-      uResolution: {
-        value: new THREE.Vector4(size.width, size.height, 1024, 1024),
-      },
-      PI: { value: Math.PI },
-      uLine: {
-        value: new THREE.Vector4(lineCount, lineSpeed, lineWidth, colorShift),
-      },
-      uDistortion: {
-        value: new THREE.Vector4(
-          imageStrength,
-          lineDistortion,
-          mouseEnabled,
-          mouseStrength
-        ),
-      },
-      uMouse: { value: mouse },
-      uNoise: { value: noiseTexture },
-      // uDist: { value: distance },
-    }
+    mesh.current.material.uniforms.uDistortion.value.x = imageStrength
+    mesh.current.material.uniforms.uDistortion.value.y = lineDistortion
+    mesh.current.material.uniforms.uDistortion.value.z = mouseEnabled
+    mesh.current.material.uniforms.uDistortion.value.w = mouseStrength
 
-    return [uniforms, mouse]
-  }, [])
+    mesh.current.material.uniforms.uColor.value = new THREE.Color(lineColor)
 
-  // const updateUniforms = () => {
-  //   uniforms.uColor.value = new THREE.Color(config.lineColor)
-  //   uniforms.uLine.value.x = config.lineCount
-  //   uniforms.uLine.value.y = config.lineSpeed
-  //   uniforms.uLine.value.z = config.lineWidth
-  //   uniforms.uLine.value.w = config.colorShift
-  //   uniforms.uDistortion.value.x = config.imageStrength
-  //   uniforms.uDistortion.value.y = config.lineDistortion
-  //   uniforms.uDistortion.value.z = config.mouseEnabled
-  //   uniforms.uDistortion.value.w = config.mouseStrength
-  // }
-
-  // // Need to update
-  // useEffect(() => {
-  //   console.log('updating uniforms')
-  //   updateUniforms()
-  // }, [controls])
+    mesh.current.material.needsUpdate = true
+  }, [config])
 
   // useEffect(() => {
   //   mesh.current.material.uniforms.uImage.value = blurTexture
   //   mesh.current.material.needsUpdate = true
   // }, [blurTexture])
+
+  useEffect(() => {
+    mesh.current.material.uniforms.uNoise.value = noiseTexture
+    mesh.current.material.needsUpdate = true
+  }, [noiseTexture])
 
   useEffect(() => {
     mesh.current.material.uniforms.uImage.value = texture
@@ -146,7 +168,7 @@ const Scene = ({ controls, config, updateConfig }) => {
       mesh.current.material.uniforms.uResolution.value.x = size.width
       mesh.current.material.uniforms.uResolution.value.y = size.height
     }
-  }, [viewport])
+  }, [size])
 
   useFrame((state, delta) => {
     mesh.current.material.uniforms.uTime.value += delta
