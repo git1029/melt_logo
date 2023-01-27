@@ -49,7 +49,7 @@ const App = () => {
 
 ```json
 {
-  "id": "abcdef123456789",
+  "title": "animation_config_logo",
   "displacementStrength": 1,
   "displacementRadius": 1,
   "displacementDecay": 0.5,
@@ -114,7 +114,7 @@ const App = () => {
 
 ```json
 {
-  "id": "abcdef123456789",
+  "title": "animation_config_waterfall",
   "lineCount": 20,
   "lineSpeed": 1,
   "lineWidth": 0.5,
