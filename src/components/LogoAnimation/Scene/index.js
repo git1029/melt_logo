@@ -39,22 +39,11 @@ const Scene = forwardRef(
         : config
       : config
 
+    // console.log('RENDER LOGO')
+
     // useEffect(() => {
-    //   // console.log('RENDER SCENE')
-
-    //   updateStore(config)
-
-    //   if (controls) {
-    //     const localStorageConfig = getLocalStorageConfig('logo')
-    //     if (localStorageConfig) updateStore(localStorageConfig)
-    //   }
-    // }, [controls])
-
-    console.log('RENDER LOGO')
-
-    useEffect(() => {
-      console.log('USEEFFECT RENDER LOGO')
-    }, [])
+    //   console.log('USEEFFECT RENDER LOGO')
+    // }, [])
 
     const { mouseArea, refractionRatio, mouseSpeed, rotAngle, rotSpeed } =
       useLeva(

@@ -41,11 +41,11 @@ const Scene = ({
       : config
     : config
 
-  console.log('RENDER WATERFALL')
+  // console.log('RENDER WATERFALL')
 
-  useEffect(() => {
-    console.log('USEEFFECT RENDER WATERFALL')
-  }, [])
+  // useEffect(() => {
+  //   console.log('USEEFFECT RENDER WATERFALL')
+  // }, [])
 
   const { image } = useLeva(
     name,
