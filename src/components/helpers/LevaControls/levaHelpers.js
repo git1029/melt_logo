@@ -1,102 +1,71 @@
-import { useEffect } from 'react'
+import { useEffect, useCallback, useState } from 'react'
 import { button, levaStore } from 'leva'
-import { downloadConfig } from './downloadConfig'
-// import configService from '../../../services/configService'
+import { downloadConfig } from '../../helpers/LevaControls/downloadConfig'
+import configService from '../../../services/configService'
 
-export const useLevaHelpers = (
-  config,
-  updateConfig,
-  changes,
-  setChanges,
-  name
-) => {
-  const store = levaStore.useStore()
-  // console.log('USELEVAHELPERS')
+export const useLevaHelpers = (name, defaults, config, updateConfig) => {
+  const [changes, setChanges] = useState(false)
 
-  // const [init, setInit] = useState(null)
-
-  // const updateLocalStorage = () => {
-  //   // console.log('UPDATELOCALSTORAGE')
-  //   let localConfig = JSON.parse(window.localStorage.getItem('melt_config'))
-  //   if (localConfig === null) localConfig = {}
-  //   if (localConfig[name] === undefined) localConfig[name] = {}
-  //   const values = getStore()
-  //   localConfig[name] = values
-  //   window.localStorage.setItem('melt_config', JSON.stringify(localConfig))
-  // }
-
-  // // Initialize store
-  // useEffect(() => {
-  //   if (init === null) {
-  //     // console.log(init)
-  //     return
-  //   }
-
-  //   // console.log(init)
-
-  //   const data = store.data
-  //   const paths = Object.keys(data)
-  //   paths.forEach((path) => {
-  //     const p = path.split('.').pop()
-  //     if (init[p] !== undefined) {
-  //       levaStore.setValueAtPath(path, init[p])
-  //       // console.log(data)
-  //       levaStore.subscribeToEditEnd(path, updateLocalStorage)
-  //     }
-  //   })
-  // }, [init])
-
-  useEffect(() => {
-    const data = store.data
+  const getStore = useCallback(() => {
+    // console.log('GET STORE')
+    // NB: store.data contains list of all leva control values (not grouped by logo/watefall mode)
+    // For this reason control names should also be unique across modes
+    const data = levaStore.getData()
     const paths = Object.keys(data)
+    const storeData = { ...defaults }
 
-    // console.log('CHECKING CHANGES')
-
-    let hasChanged = false
     paths.forEach((path) => {
       const p = path.split('.').pop()
-      if (config[p] !== undefined) {
-        if (typeof config[p] === 'object') {
-          // Check object values (NB: this only caters for 1 level deep)
-          const nestedKeys = Object.keys(config[p])
-          nestedKeys.forEach((key) => {
-            if (
-              config[p][key] !== undefined &&
-              data[path].value[key] !== undefined
-            ) {
-              if (config[p][key] !== data[path].value[key]) {
-                hasChanged = true
-              }
-            }
-          })
-        } else {
-          if (config[p] !== data[path].value) {
-            hasChanged = true
-          }
-        }
+      if (storeData[p] !== undefined) {
+        storeData[p] = data[path].value
       }
     })
 
-    if (hasChanged !== changes) {
-      setChanges(hasChanged)
-    }
-  }, [store, config, changes, setChanges])
+    return storeData
+  }, [defaults])
 
-  // const saveConfig = async () => {
-  //   const values = getStore()
-  //   console.log(values)
+  const updateLocalStorage = useCallback(() => {
+    const values = getStore()
 
-  //   // Only send sub config (i.e. logo or waterfall)
+    // console.log('UPDATELOCALSTORAGE')
+    let localConfig = JSON.parse(window.localStorage.getItem('melt_config'))
+    if (localConfig === null) localConfig = {}
+    if (localConfig[name] === undefined) localConfig[name] = {}
+    localConfig[name] = values
+    window.localStorage.setItem('melt_config', JSON.stringify(localConfig))
+  }, [getStore, name])
 
-  //   // // TODO: Add try/catch
-  //   const savedConfig = await configService.updateConfig(values)
-  //   console.log('saved', savedConfig)
+  const checkChanges = useCallback(() => {
+    // console.log('UPDATECHANGES')
+    const values = getStore()
+    const paths = Object.keys(values)
 
-  //   updateConfig(values)
-  // }
+    let hasChanged = false
+    paths.forEach((p) => {
+      if (typeof values[p] === 'object') {
+        //  Check object values (NB: this only caters for 1 level deep)
+        const nestedKeys = Object.keys(values[p])
+        nestedKeys.forEach((key) => {
+          if (values[p][key] !== config[p][key]) hasChanged = true
+        })
+      } else {
+        if (config[p] !== values[p]) hasChanged = true
+      }
+    })
 
-  const resetStore = () => {
-    const data = store.data
+    // const current = levaStore.getData()['debug.changesWaterfall'].value
+    // console.log(current, hasChanged)
+    // if (hasChanged !== changes) {
+    // console.log(hasChanged)
+    // levaStore.setValueAtPath('debug.changesWaterfall', hasChanged)
+    setChanges(hasChanged)
+    // }
+  }, [getStore, config])
+
+  const resetStore = useCallback(() => {
+    // console.log('RESET STORE')
+    // Reset to config (not localStorage)
+    const data = levaStore.getData()
     const paths = Object.keys(data)
 
     paths.forEach((path) => {
@@ -107,286 +76,104 @@ export const useLevaHelpers = (
       }
     })
 
-    // updateLocalStorage()
+    updateLocalStorage()
+    setChanges(false)
+    // updateChanges()
+  }, [config, updateLocalStorage])
+
+  const downloadStore = useCallback(() => {
+    downloadConfig(name, JSON.stringify(getStore()))
+  }, [getStore, name])
+
+  const handleEditEnd = useCallback(() => {
+    updateLocalStorage()
+    checkChanges()
+  }, [updateLocalStorage, checkChanges])
+
+  // console.log(levaStore)
+  // const test = levaStore.useStore()
+  // console.log(test)
+
+  const saveStore = async () => {
+    // Only if diff to values in snippet
+
+    // console.log('SAVESTORE')
+    const values = getStore()
+    console.log(values)
+
+    // Only send sub config (i.e. logo or waterfall)
+
+    // TODO: Add try/catch
+    try {
+      const savedConfig = await configService.updateConfig(values)
+      // console.log('saved levaHelpers', savedConfig)
+
+      updateConfig(savedConfig.config)
+    } catch (error) {
+      console.log(error)
+    }
   }
 
-  // const updateStore = (values) => {
-  //   // console.log('UPDATESTORE')
-  //   // const data = store.data
-  //   // const paths = Object.keys(data)
-  //   // paths.forEach((path) => {
-  //   //   const p = path.split('.').pop()
-  //   //   if (config[p] !== undefined) {
-  //   //     levaStore.setValueAtPath(path, config[p])
-  //   //     console.log(data)
-  //   //     levaStore.subscribeToEditEnd(path, updateLocalStorage)
-  //   //   }
-  //   // })
-  //   setInit(values)
-  // }
+  useEffect(() => {
+    const paths = levaStore.getVisiblePaths()
 
-  const getStore = () => {
-    // NB: store.data contains list of all leva control values (not grouped by logo/watefall mode)
-    // For this reason control names should also be unique across modes
-    const data = store.data
-    const keys = Object.keys(data)
-    const newConfig = { ...config }
+    // console.log(paths)
 
-    keys.forEach((key) => {
-      const k = key.split('.').pop()
-      if (newConfig[k] !== undefined) {
-        newConfig[k] = data[key].value
+    // console.log(levaStore)
+    // console.log(levaStore.getData())
+
+    const subscriptions = []
+
+    // Initialize values
+    // console.log('INITIALIZING VALUES')
+    paths.forEach((path) => {
+      const p = path.split('.').pop()
+      if (defaults[p] !== undefined) {
+        levaStore.setValueAtPath(path, defaults[p])
+        subscriptions.push(levaStore.subscribeToEditEnd(path, handleEditEnd))
       }
     })
 
-    return newConfig
-  }
+    checkChanges()
 
-  const buttons = {
+    // console.log(subscriptions)
+
+    return () => {
+      // console.log('**** UNSUBSCRIBING')
+
+      // Unsubscribe to listeners on unmount
+      subscriptions.forEach((s) => s())
+      // console.log(levaStore.getVisiblePaths())
+      // // Should dispose paths too?
+      // levaStore.disposePaths(levStore.getVisiblePaths())
+    }
+  }, [defaults, handleEditEnd, checkChanges])
+
+  const buttonsSchema = {
     reset: button(
       () => {
         resetStore()
+        // console.log('reset')
       },
-      { disabled: !changes, order: 1 }
+      {
+        disabled: !changes,
+        order: 1,
+      }
     ),
     'export settings (JSON)': button(
       () => {
-        downloadConfig(name, JSON.stringify(getStore()))
+        // console.log('download')
+        downloadStore()
       },
       { order: 2 }
     ),
-    // 'save settings': button(
-    //   () => {
-    //     saveConfig()
-    //   },
-    //   { disabled: !changes, order: 3 }
-    // ),
+    'save settings': button(
+      () => {
+        saveStore()
+      },
+      { disabled: !changes, order: 3 }
+    ),
   }
 
-  return {
-    store,
-    updateStore: null,
-    buttons,
-  }
+  return { buttons: buttonsSchema, changes }
 }
-
-// export const useLevaUpdate = (config) => {
-//   const store = levaStore.useStore()
-
-//   const [init, setInit] = useState(null)
-
-//   // Initialize store
-//   useEffect(() => {
-//     if (init === null) {
-//       // console.log(init)
-//       return
-//     }
-
-//     const getStore = () => {
-//       // NB: store.data contains list of all leva control values (not grouped by logo/watefall mode)
-//       // For this reason control names should also be unique across modes
-//       const data = store.data
-//       const keys = Object.keys(data)
-//       const newConfig = { ...config }
-
-//       keys.forEach((key) => {
-//         const k = key.split('.').pop()
-//         if (newConfig[k] !== undefined) {
-//           newConfig[k] = data[key].value
-//         }
-//       })
-
-//       return newConfig
-//     }
-
-//     const updateLocalStorage = () => {
-//       let localConfig = JSON.parse(window.localStorage.getItem('melt_config'))
-//       if (localConfig === null) localConfig = {}
-//       if (localConfig[name] === undefined) localConfig[name] = {}
-//       const values = getStore()
-//       localConfig[name] = values
-//       window.localStorage.setItem('melt_config', JSON.stringify(localConfig))
-//     }
-
-//     // console.log(init)
-
-//     const data = store.data
-//     const paths = Object.keys(data)
-//     paths.forEach((path) => {
-//       const p = path.split('.').pop()
-//       if (init[p] !== undefined) {
-//         levaStore.setValueAtPath(path, init[p])
-//         // console.log(data)
-//         levaStore.subscribeToEditEnd(path, updateLocalStorage)
-//       }
-//     })
-//   }, [config, init, store.data])
-
-//   const updateStore = (values) => {
-//     // const data = store.data
-//     // const paths = Object.keys(data)
-//     // paths.forEach((path) => {
-//     //   const p = path.split('.').pop()
-//     //   if (config[p] !== undefined) {
-//     //     levaStore.setValueAtPath(path, config[p])
-//     //     console.log(data)
-//     //     levaStore.subscribeToEditEnd(path, updateLocalStorage)
-//     //   }
-//     // })
-//     setInit(values)
-//   }
-
-//   return { updateStore }
-// }
-
-// export const useLevaHelpers = (config, name) => {
-//   const [init, setInit] = useState(null)
-//   const [changes, setChanges] = useState(false)
-//   const store = levaStore.useStore()
-
-//   const updateLocalStorage = () => {
-//     let localConfig = JSON.parse(window.localStorage.getItem('melt_config'))
-//     if (localConfig === null) localConfig = {}
-//     if (localConfig[name] === undefined) localConfig[name] = {}
-//     const values = getStore()
-//     localConfig[name] = values
-//     window.localStorage.setItem('melt_config', JSON.stringify(localConfig))
-//   }
-
-//   useEffect(() => {
-//     const data = store.data
-//     const paths = Object.keys(data)
-
-//     let hasChanged = false
-//     paths.forEach((path) => {
-//       const p = path.split('.').pop()
-//       if (config[p] !== undefined) {
-//         if (typeof config[p] === 'object') {
-//           // Check object values (NB: this only caters for 1 level deep)
-//           const nestedKeys = Object.keys(config[p])
-//           nestedKeys.forEach((key) => {
-//             if (
-//               config[p][key] !== undefined &&
-//               data[path].value[key] !== undefined
-//             ) {
-//               if (config[p][key] !== data[path].value[key]) {
-//                 hasChanged = true
-//               }
-//             }
-//           })
-//         } else {
-//           if (config[p] !== data[path].value) {
-//             hasChanged = true
-//           }
-//         }
-//       }
-//     })
-
-//     // if (hasChanged !== changes) {
-//     setChanges(hasChanged)
-//     // }
-//   }, [store, config])
-
-//   // const saveConfig = async () => {
-//   //   const values = getStore()
-//   //   console.log(values)
-
-//   //   // Only send sub config (i.e. logo or waterfall)
-
-//   //   // // TODO: Add try/catch
-//   //   const savedConfig = await configService.updateConfig(values)
-//   //   console.log('saved', savedConfig)
-
-//   //   updateConfig(values)
-//   // }
-
-//   const resetStore = () => {
-//     const data = store.data
-//     const paths = Object.keys(data)
-
-//     paths.forEach((path) => {
-//       const p = path.split('.').pop()
-//       if (config[p] !== undefined) {
-//         // Reset to last saved config
-//         levaStore.setValueAtPath(path, config[p])
-//       }
-//     })
-
-//     updateLocalStorage()
-//   }
-
-//   // Initialize store
-//   useEffect(() => {
-//     if (init === null) {
-//       console.log(init)
-//       return
-//     }
-
-//     console.log(init)
-
-//     const data = store.data
-//     const paths = Object.keys(data)
-//     console.log(data)
-//     paths.forEach((path) => {
-//       const p = path.split('.').pop()
-//       if (init[p] !== undefined) {
-//         levaStore.setValueAtPath(path, init[p])
-//         levaStore.subscribeToEditEnd(path, updateLocalStorage)
-//       }
-//     })
-//   }, [init])
-
-//   const updateStore = (values) => {
-//     // const data = store.data
-//     // const paths = Object.keys(data)
-//     // paths.forEach((path) => {
-//     //   const p = path.split('.').pop()
-//     //   if (config[p] !== undefined) {
-//     //     levaStore.setValueAtPath(path, config[p])
-//     //     console.log(data)
-//     //     levaStore.subscribeToEditEnd(path, updateLocalStorage)
-//     //   }
-//     // })
-//     setInit(values)
-//   }
-
-//   const getStore = () => {
-//     // NB: store.data contains list of all leva control values (not grouped by logo/watefall mode)
-//     // For this reason control names should also be unique across modes
-//     const data = store.data
-//     const keys = Object.keys(data)
-//     const newConfig = { ...config }
-
-//     keys.forEach((key) => {
-//       const k = key.split('.').pop()
-//       if (newConfig[k] !== undefined) {
-//         newConfig[k] = data[key].value
-//       }
-//     })
-
-//     return newConfig
-//   }
-
-//   const buttons = {
-//     reset: button(
-//       () => {
-//         resetStore()
-//       },
-//       { disabled: !changes, order: 1 }
-//     ),
-//     'export settings (JSON)': button(
-//       () => {
-//         downloadConfig(name, JSON.stringify(getStore()))
-//       },
-//       { order: 2 }
-//     ),
-//     // 'save settings': button(
-//     //   () => {
-//     //     saveConfig()
-//     //   },
-//     //   { disabled: !changes, order: 3 }
-//     // ),
-//   }
-
-//   return { buttons, updateStore }
-// }

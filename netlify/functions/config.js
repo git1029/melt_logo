@@ -11,6 +11,7 @@ exports.handler = (event, context, callback) => {
 
   // Here's a function we'll use to define how our response will look like when we call callback
   const pass = (code, body) => {
+    console.log(body)
     callback(null, {
       statusCode: code,
       body: JSON.stringify(body),
@@ -54,12 +55,23 @@ exports.handler = (event, context, callback) => {
 
     console.log('updatedSnippet', updatedSnippet)
 
-    // Add try/catch
-    const response = await axios.put(`${URL}/${snippet.id}`, updatedSnippet, {
-      headers,
-    })
+    try {
+      const response = await axios.put(`${URL}/${snippet.id}`, updatedSnippet, {
+        headers,
+      })
 
-    return pass(200, response.data)
+      // return pass(200, { snippet: response.data, config: JSON.parse(body) })
+
+      return pass(200, {
+        snippet: {
+          general: response.data.general,
+          title: response.data.title,
+        },
+        config: JSON.parse(body),
+      })
+    } catch (error) {
+      return pass(500, { error })
+    }
   }
 
   if (event.httpMethod === 'PUT') {

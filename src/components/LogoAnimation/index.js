@@ -7,6 +7,7 @@ import Scene from './Scene'
 
 import { useConfig } from '../helpers/LevaControls/setupConfig'
 import { useToggleControls } from '../helpers/toggleControls'
+import { getLocalStorageConfig } from '../helpers/LevaControls/setupConfig'
 
 const glSettings = {
   antialias: false,
@@ -16,15 +17,18 @@ const created = ({ gl }) => {
   gl.domElement.id = 'logoAnimation'
 }
 
+const name = 'logo'
+
 const LogoAnimation = ({ controls, effectRef }) => {
   const [sceneFps, setSceneFps] = useState(60)
 
-  const [config, updateConfig] = useConfig('logo')
+  const [config, updateConfig] = useConfig(name)
+  const localStorageConfig = getLocalStorageConfig(name)
   useToggleControls(controls === undefined ? false : controls)
 
   return (
     <>
-      {controls ? <LevaControls /> : null}
+      <LevaControls controls={controls === undefined ? false : controls} />
       <div
         style={{
           width: '100%',
@@ -54,9 +58,11 @@ const LogoAnimation = ({ controls, effectRef }) => {
           >
             <Scene
               fps={sceneFps}
-              controls={controls === undefined ? false : true}
+              name={name}
+              controls={controls === undefined ? false : controls}
               config={config}
               updateConfig={updateConfig}
+              localStorageConfig={localStorageConfig}
               ref={effectRef}
             />
           </PerformanceMonitor>

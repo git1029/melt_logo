@@ -1,10 +1,14 @@
 import { useEffect, useRef, useMemo } from 'react'
 import * as THREE from 'three'
+// import { useControls, folder, button, levaStore } from 'leva'
 import { useFrame, useThree } from '@react-three/fiber'
 import { OrthographicCamera, useTexture } from '@react-three/drei'
 
-// import { getLocalStorageConfig } from '../../helpers/LevaControls/setupConfig'
-import { useLeva } from '../config/controls'
+// import { downloadConfig } from '../../helpers/LevaControls/downloadConfig'
+
+import { useLeva } from './controls'
+
+// import { useLeva } from '../config/controls'
 
 import vertexShader from './shaders/vertex'
 import fragmentShader from './shaders/fragment'
@@ -15,7 +19,13 @@ import noise from '../assets/textures/noise.png'
 
 // import { blur } from '../../helpers/blurTexture'
 
-const Scene = ({ controls, config, updateConfig }) => {
+const Scene = ({
+  name,
+  controls,
+  config,
+  updateConfig,
+  localStorageConfig,
+}) => {
   const mesh = useRef()
 
   // const [blurStrength, setBlurStrength] = useState(2)
@@ -25,22 +35,26 @@ const Scene = ({ controls, config, updateConfig }) => {
 
   const { size } = useThree()
 
-  // useEffect(() => {
-  //   // console.log('RENDER SCENE')
+  const defaults = controls
+    ? localStorageConfig
+      ? localStorageConfig
+      : config
+    : config
 
-  //   updateStore(config)
+  console.log('RENDER WATERFALL')
 
-  //   if (controls) {
-  //     const localStorageConfig = getLocalStorageConfig('waterfall')
-  //     if (localStorageConfig) updateStore(localStorageConfig)
-  //   }
-  // }, [controls])
+  useEffect(() => {
+    console.log('USEEFFECT RENDER WATERFALL')
+  }, [])
 
-  const { image } = useLeva(controls, config, updateConfig, [
-    mesh,
-    // updateBlurStrength,
-    imageOptions,
-  ])
+  const { image } = useLeva(
+    name,
+    controls,
+    defaults, // localStorage (if controls) > snippet > base
+    config, // snippet > base
+    updateConfig,
+    [mesh, imageOptions]
+  )
 
   // Set texture source if upload/image undefined (if controls disabled)
   // TODO: add API get texture from server
@@ -130,7 +144,7 @@ const Scene = ({ controls, config, updateConfig }) => {
       mouseEnabled,
       mouseStrength,
       imageStrength,
-    } = config
+    } = defaults
 
     mesh.current.material.uniforms.uLine.value.x = lineCount
     mesh.current.material.uniforms.uLine.value.y = lineSpeed
@@ -145,7 +159,7 @@ const Scene = ({ controls, config, updateConfig }) => {
     mesh.current.material.uniforms.uColor.value = new THREE.Color(lineColor)
 
     mesh.current.material.needsUpdate = true
-  }, [config])
+  }, [defaults])
 
   // useEffect(() => {
   //   mesh.current.material.uniforms.uImage.value = blurTexture

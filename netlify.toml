@@ -1,4 +1,4 @@
 [[redirects]]
-from = "/config"
-to = "/.netlify/functions/config"
+from = "/*"
+to = "/index.html"
 status = 200

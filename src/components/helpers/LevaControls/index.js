@@ -1,8 +1,7 @@
 import { forwardRef } from 'react'
 import { Leva } from 'leva'
-import './LevaControls.css'
 
-const LevaControls = forwardRef((_props, ref) => {
+const LevaControls = forwardRef(({ controls }, ref) => {
   return (
     <div
       ref={ref}
@@ -12,7 +11,7 @@ const LevaControls = forwardRef((_props, ref) => {
         cursor: 'default',
       }}
     >
-      <Leva />
+      <Leva hidden={!controls} />
     </div>
   )
 })

@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "homepage": ".",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build"
@@ -35,6 +34,7 @@
       "last 1 safari version"
     ]
   },
+  "proxy": "http://localhost:9999",
   "devDependencies": {
     "eslint": "^8.32.0",
     "eslint-config-prettier": "^8.6.0",
