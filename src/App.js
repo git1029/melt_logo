@@ -1,6 +1,32 @@
+import { useContext } from 'react'
 import { Link, Route, Routes } from 'react-router-dom'
+import { AuthContext } from './AuthContext'
 import Home from './components/Home'
 import WaterfallAnimation from './components/WaterfallAnimation'
+
+const Admin = () => {
+  const { user, login, logout } = useContext(AuthContext)
+
+  console.log(user)
+
+  if (!user) {
+    return (
+      <div style={{ position: 'relative', zIndex: 1000 }}>
+        <p>Please login</p>
+        <button onClick={login}>Login</button>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ position: 'relative', zIndex: 1000 }}>
+      <p>{user.email}</p>
+      <button onClick={logout}>Logout</button>
+      <h2>Logo</h2>
+      <h2>Waterfall</h2>
+    </div>
+  )
+}
 
 const Menu = () => {
   return (
@@ -16,6 +42,8 @@ const Menu = () => {
 }
 
 const App = () => {
+  // const user = useContext(AuthContext)
+
   return (
     <>
       <Menu />
@@ -39,6 +67,7 @@ const App = () => {
             </div>
           }
         />
+        <Route path="/admin" element={<Admin />} />
       </Routes>
     </>
   )
