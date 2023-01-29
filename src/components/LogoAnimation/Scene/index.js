@@ -16,7 +16,7 @@ import meltLogo from '../assets/textures/melt_logo.png'
 import meltLogoFade from '../assets/textures/melt_logo_fade.png'
 import refractionGeometry from '../assets/models/refraction_geometry.obj'
 
-// import { blur } from '../../helpers/blurTexture'
+import { blur } from '../../helpers/blurTexture'
 
 // https://eriksachse.medium.com/react-three-fiber-custom-postprocessing-render-target-solution-without-using-the-effectcomposer-d3a94e6ae3c3
 
@@ -31,7 +31,7 @@ const Scene = forwardRef(
     // const updateBlurStrength = (value) => setBlurStrength(value)
 
     const three = useThree()
-    const { size, viewport } = three
+    const { size, viewport, gl } = three
 
     const defaults = controls
       ? localStorageConfig
@@ -45,20 +45,27 @@ const Scene = forwardRef(
     //   console.log('USEEFFECT RENDER LOGO')
     // }, [])
 
-    const { mouseArea, refractionRatio, mouseSpeed, rotAngle, rotSpeed } =
-      useLeva(
-        name,
-        controls,
-        defaults, // localStorage (if controls) > snippet > base
-        config, // snippet > base
-        updateConfig,
-        [mesh, trail]
-      )
+    const {
+      upload,
+      mouseArea,
+      refractionRatio,
+      mouseSpeed,
+      rotAngle,
+      rotSpeed,
+    } = useLeva(
+      name,
+      controls,
+      defaults, // localStorage (if controls) > snippet > base
+      config, // snippet > base
+      updateConfig,
+      [mesh, trail]
+    )
 
-    const [texture, logoTextureC] = useTexture([meltLogo, meltLogoFade])
-    // const texture = useTexture(
-    //   upload === undefined || upload === null ? meltLogo : upload
-    // )
+    // const [texture, logoTextureC] = useTexture([meltLogo, meltLogoFade])
+    const texture = useTexture(
+      upload === undefined || upload === null ? meltLogo : upload
+    )
+    const textureFade = useTexture(meltLogoFade)
     const loadedModel = useLoader(OBJLoader, refractionGeometry)
     const geometry = loadedModel.children[0].geometry
 
@@ -158,13 +165,22 @@ const Scene = forwardRef(
     useEffect(() => {
       if (mesh.current && mesh.current.material) {
         mesh.current.material.uniforms.uLogo.value = texture
-        mesh.current.material.uniforms.uLogoC.value = logoTextureC
+
+        if (
+          !controls ||
+          (controls && upload === null) ||
+          upload === undefined
+        ) {
+          mesh.current.material.uniforms.uLogoC.value = textureFade
+        } else {
+          const blurTexture = blur(gl, 1024, 20, texture)
+          mesh.current.material.uniforms.uLogoC.value = blurTexture
+        }
         mesh.current.material.uniforms.uResolution.value.z = texture.width
         mesh.current.material.uniforms.uResolution.value.w = texture.height
-
         mesh.current.material.needsUpdate = true
       }
-    }, [texture, logoTextureC])
+    }, [texture, textureFade, controls, upload, gl])
 
     // // Get blurred image for color effect
     // // Only run on load or if new image uploaded (debug mode only)
@@ -254,6 +270,8 @@ const Scene = forwardRef(
     }
 
     const getFadeTime = () => {
+      // uTransition.x === stage (0 == not faded, 1 == faded) -> need way to detect if canvas out of view/completely faded
+
       const uFade = mesh.current.material.uniforms.uTransition.value
       const uFadeLast = mesh.current.material.uniforms.uFadeLast.value
       const uTime = mesh.current.material.uniforms.uTime.value

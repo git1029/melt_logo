@@ -10,7 +10,7 @@ export const useLeva = (
   updateConfig,
   dependencies
 ) => {
-  const [mesh, imageOptions] = dependencies
+  const [mesh, imageOptions, updateBlurStrength] = dependencies
 
   // console.log(levaStore)
 
@@ -24,22 +24,31 @@ export const useLeva = (
           options: imageOptions,
           order: -4,
         },
-        // uploadWaterfall: {
-        //   label: 'upload',
-        //   image: null,
-        //   order: -3,
-        // },
-        // blurStrength: {
-        //   label: 'blur',
-        //   value: 2,
-        //   min: 0,
-        //   max: 20,
-        //   step: 1,
-        //   order: -2,
-        //   onEditEnd: (v) => {
-        //     updateBlurStrength(v)
+        uploadWaterfall: {
+          label: 'upload',
+          image: null,
+          order: -3,
+        },
+        blurStrength: {
+          label: 'blur',
+          value: 2,
+          min: 0,
+          max: 20,
+          step: 1,
+          order: -2,
+          onEditEnd: (v) => {
+            updateBlurStrength(v)
+          },
+          // Only render blur slider if upload !== null
+          render: (get) => get('image.uploadWaterfall'),
+        },
+        // 'download image': button(
+        //   (get) => {
+        //     console.log('download')
+        //     console.log(get('image.blurStrength'))
         //   },
-        // },
+        //   { order: -1 }
+        // ),
         imageStrength: {
           label: 'strength',
           value: defaults.imageStrength,
@@ -49,7 +58,7 @@ export const useLeva = (
           onChange: (v) => {
             mesh.current.material.uniforms.uDistortion.value.x = v
           },
-          order: -1,
+          order: 0,
         },
       },
       { order: -4 }
@@ -159,10 +168,18 @@ export const useLeva = (
   // Could limit levaControls to empty object if !controls
   // Also need to pass controls as dependency so store rebuilds input schema
 
-  const { image } = useControls(schema, [controls])
+  const { image, uploadWaterfall } = useControls(schema, [controls])
   // const { image } = useControls(schema)
 
   // console.log(image)
+
+  // const downloadBtn = document.querySelector('.leva-c-ihqPFh')
+  // if (downloadBtn) {
+  //   const btnParent = downloadBtn.parentElement
+  //   if (btnParent) {
+  //     btnParent.style.display = uploadWaterfall ? 'grid' : 'none'
+  //   }
+  // }
 
   const { buttons, changes } = useLevaHelpers(
     name,
@@ -175,5 +192,8 @@ export const useLeva = (
 
   useControls({ controls: folder(buttons, { order: 10 }) }, [controls, changes])
 
-  return { image: controls ? image : null }
+  return {
+    upload: controls ? uploadWaterfall : null,
+    image: controls ? image : null,
+  }
 }

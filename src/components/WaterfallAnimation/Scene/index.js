@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from 'react'
+import { useEffect, useRef, useMemo, useState } from 'react'
 import * as THREE from 'three'
 // import { useControls, folder, button, levaStore } from 'leva'
 import { useFrame, useThree } from '@react-three/fiber'
@@ -17,7 +17,7 @@ import meltLogo from '../assets/textures/melt_logo.png'
 import smiley from '../assets/textures/smiley.png'
 import noise from '../assets/textures/noise.png'
 
-// import { blur } from '../../helpers/blurTexture'
+import { blur } from '../../helpers/blurTexture'
 
 const Scene = ({
   name,
@@ -28,12 +28,12 @@ const Scene = ({
 }) => {
   const mesh = useRef()
 
-  // const [blurStrength, setBlurStrength] = useState(2)
-  // const updateBlurStrength = (value) => setBlurStrength(value)
+  const [blurStrength, setBlurStrength] = useState(2)
+  const updateBlurStrength = (value) => setBlurStrength(value)
 
   const imageOptions = { smiley, melt: meltLogo }
 
-  const { size } = useThree()
+  const { size, gl } = useThree()
 
   const defaults = controls
     ? localStorageConfig
@@ -47,21 +47,21 @@ const Scene = ({
   //   console.log('USEEFFECT RENDER WATERFALL')
   // }, [])
 
-  const { image } = useLeva(
+  const { upload, image } = useLeva(
     name,
     controls,
     defaults, // localStorage (if controls) > snippet > base
     config, // snippet > base
     updateConfig,
-    [mesh, imageOptions]
+    [mesh, imageOptions, updateBlurStrength]
   )
 
   // Set texture source if upload/image undefined (if controls disabled)
   // TODO: add API get texture from server
   const textureSource = () => {
-    // if (upload !== undefined && upload !== null) {
-    //   return upload
-    // }
+    if (upload !== undefined && upload !== null) {
+      return upload
+    }
 
     if (image !== undefined && image !== null) {
       return image
@@ -171,10 +171,28 @@ const Scene = ({
     mesh.current.material.needsUpdate = true
   }, [noiseTexture])
 
+  // useEffect(() => {
+  //   mesh.current.material.uniforms.uImage.value = texture
+  //   mesh.current.material.needsUpdate = true
+  // }, [texture])
+
   useEffect(() => {
-    mesh.current.material.uniforms.uImage.value = texture
-    mesh.current.material.needsUpdate = true
-  }, [texture])
+    if (mesh.current && mesh.current.material) {
+      if (!controls || (controls && upload === null) || upload === undefined) {
+        mesh.current.material.uniforms.uImage.value = texture
+      } else {
+        const blurTexture = blur(gl, 1024, blurStrength, texture)
+
+        mesh.current.material.uniforms.uImage.value = blurTexture
+      }
+
+      mesh.current.material.needsUpdate = true
+
+      // mesh.current.material.uniforms.uResolution.value.z = texture.width
+      // mesh.current.material.uniforms.uResolution.value.w = texture.height
+      // mesh.current.material.needsUpdate = true
+    }
+  }, [texture, controls, upload, gl, blurStrength])
 
   // Update resolution uniform on viewport resize
   useEffect(() => {

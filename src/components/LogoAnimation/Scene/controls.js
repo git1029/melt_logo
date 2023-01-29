@@ -17,15 +17,15 @@ export const useLeva = (
 
   // if (controls) {
   const schema = {
-    // image: folder(
-    //   {
-    //     uploadLogo: {
-    //       label: 'upload',
-    //       image: null,
-    //     },
-    //   },
-    //   { order: -4 }
-    // ),
+    image: folder(
+      {
+        uploadLogo: {
+          label: 'upload',
+          image: null,
+        },
+      },
+      { order: -4 }
+    ),
     displacement: folder(
       {
         displacementStrength: {
@@ -167,8 +167,14 @@ export const useLeva = (
   // Also need to pass controls as dependency so store rebuilds input schema
 
   // const { image } = useControls(schema, [controls])
-  const { mouseArea, refractionRatio, mouseSpeed, rotAngle, rotSpeed } =
-    useControls(schema, [controls])
+  const {
+    uploadLogo,
+    mouseArea,
+    refractionRatio,
+    mouseSpeed,
+    rotAngle,
+    rotSpeed,
+  } = useControls(schema, [controls])
 
   // console.log(image)
 
@@ -184,7 +190,7 @@ export const useLeva = (
   useControls({ controls: folder(buttons, { order: 10 }) }, [controls, changes])
 
   return {
-    // upload: controls ? uploadLogo : null,
+    upload: controls ? uploadLogo : null,
     mouseArea: controls ? mouseArea : config.mouseArea,
     refractionRatio: controls ? refractionRatio : config.refractionRatio,
     mouseSpeed: controls ? mouseSpeed : config.mouseSpeed,
