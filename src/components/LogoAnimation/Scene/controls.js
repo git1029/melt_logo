@@ -11,8 +11,6 @@ export const useLeva = (
 ) => {
   const [mesh, trail] = dependencies
 
-  // console.log(levaStore)
-
   // let schema = {}
 
   // if (controls) {
@@ -161,12 +159,9 @@ export const useLeva = (
   }
   // }
 
-  // console.log(schema)
-
   // Could limit levaControls to empty object if !controls
   // Also need to pass controls as dependency so store rebuilds input schema
 
-  // const { image } = useControls(schema, [controls])
   const {
     uploadLogo,
     mouseArea,
@@ -176,15 +171,11 @@ export const useLeva = (
     rotSpeed,
   } = useControls(schema, [controls])
 
-  // console.log(image)
-
   const { buttons, changes } = useLevaHelpers(
     name,
     defaults,
     config,
     updateConfig
-    // changes,
-    // (c) => setChanges(c),
   )
 
   useControls({ controls: folder(buttons, { order: 10 }) }, [controls, changes])

@@ -1,0 +1,178 @@
+.admin-page {
+  background: #1b1b1d;
+  color: #fcfcfc;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  min-width: 600px;
+}
+
+.admin-login {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-login-form-container {
+  box-sizing: border-box;
+  background: #def052;
+  color: #1b1b1d;
+  display: flex;
+  flex-direction: column;
+  padding: 40px;
+  width: 480px;
+  min-width: 480px;
+  max-width: 480px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+}
+
+.admin-panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.admin-view-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 30px 10px 35px;
+  height: fit-content;
+}
+
+.admin-helper {
+  color: #def052;
+  align-self: center;
+  display: flex;
+  gap: 0 30px;
+  font-size: 14px;
+}
+
+.admin-helper span {
+  border: 1px solid #def052;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin-right: 5px;
+}
+
+.user .admin-panel {
+  display: flex;
+  flex-grow: 1;
+}
+
+.admin-view {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
+  padding: 0 20px;
+}
+
+.admin-logout {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0 20px;
+  width: 25%;
+}
+
+.admin-logout-user {
+  display: flex;
+  align-items: center;
+}
+
+.admin-logout-user .avatar {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #def052;
+  margin-right: 7px;
+}
+
+.admin-nav {
+  display: flex;
+  width: 50%;
+  justify-content: center;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 0 20px 0;
+}
+
+.user .admin-header {
+  padding: 10px 30px;
+}
+
+.user .admin-header-img {
+  width: 25%;
+}
+
+.user .admin-header img {
+  width: 50px;
+  height: 50px;
+}
+
+.admin-animation-container {
+  width: 100%;
+  position: relative;
+  height: 100%;
+  background-color: #000000;
+  flex-grow: 1;
+}
+
+.admin-animation-container canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.admin-animation-container .leva > div:first-child {
+  position: absolute;
+}
+
+.admin-animation-container .r3f-perf {
+  position: absolute;
+}
+
+.admin-page.fullscreen .admin-header {
+  display: none;
+}
+
+.admin-page.fullscreen .admin-view {
+  padding: 0;
+}
+
+.admin-page.fullscreen .admin-view-footer {
+  display: none;
+}
+
+@media screen and (max-width: 540px) {
+  .admin-header {
+    padding: 20px 20px 20px;
+  }
+  .admin-return {
+    padding-left: 20px;
+  }
+
+  .user .admin-return {
+    padding-left: 0px;
+  }
+
+  .admin-page {
+    justify-content: flex-start;
+  }
+
+  .admin-login {
+    width: 100%;
+  }
+  .admin-login-form-container {
+    padding: 25px 30px;
+    width: 100%;
+    min-width: 320px;
+    max-width: 100%;
+    border-radius: 0;
+  }
+}

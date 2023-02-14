@@ -12,7 +12,7 @@ const Home = ({ controls }) => {
   // <LogoAnimation effectRef={effectRef} />
   const { effectRef, updateFadeEffect } = useFadeEffect()
 
-  const [backgroundColor] = useState('#000000')
+  const [backgroundColor, setBackgroundColor] = useState('#000000')
   const [backgroundImage] = useState('none')
 
   useEffect(() => {
@@ -86,8 +86,27 @@ const Home = ({ controls }) => {
       <div
         style={{
           height: '100vh',
+          marginBottom: '100px',
+          position: 'relative',
+          zIndex: 99,
         }}
-      />
+      >
+        <div
+          onMouseEnter={() => {
+            setBackgroundColor('#00a742')
+          }}
+          onMouseLeave={() => {
+            setBackgroundColor('#000000')
+          }}
+          className="project"
+          style={{
+            height: '40vw',
+            width: '30vw',
+            background: '#999999',
+            margin: '0 auto',
+          }}
+        ></div>
+      </div>
     </div>
   )
 }

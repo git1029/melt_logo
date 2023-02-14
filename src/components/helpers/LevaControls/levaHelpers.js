@@ -53,13 +53,7 @@ export const useLevaHelpers = (name, defaults, config, updateConfig) => {
       }
     })
 
-    // const current = levaStore.getData()['debug.changesWaterfall'].value
-    // console.log(current, hasChanged)
-    // if (hasChanged !== changes) {
-    // console.log(hasChanged)
-    // levaStore.setValueAtPath('debug.changesWaterfall', hasChanged)
     setChanges(hasChanged)
-    // }
   }, [getStore, config])
 
   const resetStore = useCallback(() => {
@@ -90,10 +84,6 @@ export const useLevaHelpers = (name, defaults, config, updateConfig) => {
     checkChanges()
   }, [updateLocalStorage, checkChanges])
 
-  // console.log(levaStore)
-  // const test = levaStore.useStore()
-  // console.log(test)
-
   const saveStore = async () => {
     // Only if diff to values in snippet
 
@@ -102,8 +92,6 @@ export const useLevaHelpers = (name, defaults, config, updateConfig) => {
     console.log(values)
 
     // Only send sub config (i.e. logo or waterfall)
-
-    // TODO: Add try/catch
     try {
       const savedConfig = await configService.updateConfig(values)
       // console.log('saved levaHelpers', savedConfig)
@@ -116,12 +104,6 @@ export const useLevaHelpers = (name, defaults, config, updateConfig) => {
 
   useEffect(() => {
     const paths = levaStore.getVisiblePaths()
-
-    // console.log(paths)
-
-    // console.log(levaStore)
-    // console.log(levaStore.getData())
-
     const subscriptions = []
 
     // Initialize values
@@ -136,14 +118,11 @@ export const useLevaHelpers = (name, defaults, config, updateConfig) => {
 
     checkChanges()
 
-    // console.log(subscriptions)
-
     return () => {
       // console.log('**** UNSUBSCRIBING')
 
       // Unsubscribe to listeners on unmount
       subscriptions.forEach((s) => s())
-      // console.log(levaStore.getVisiblePaths())
       // // Should dispose paths too?
       // levaStore.disposePaths(levStore.getVisiblePaths())
     }
@@ -153,7 +132,6 @@ export const useLevaHelpers = (name, defaults, config, updateConfig) => {
     reset: button(
       () => {
         resetStore()
-        // console.log('reset')
       },
       {
         disabled: !changes,
@@ -162,7 +140,6 @@ export const useLevaHelpers = (name, defaults, config, updateConfig) => {
     ),
     'export settings (JSON)': button(
       () => {
-        // console.log('download')
         downloadStore()
       },
       { order: 2 }

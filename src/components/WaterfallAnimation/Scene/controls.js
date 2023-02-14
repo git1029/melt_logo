@@ -12,8 +12,6 @@ export const useLeva = (
 ) => {
   const [mesh, imageOptions, updateBlurStrength] = dependencies
 
-  // console.log(levaStore)
-
   // let schema = {}
 
   // if (controls) {
@@ -127,14 +125,6 @@ export const useLeva = (
     ),
     mouse: folder(
       {
-        // mouseEnabled: {
-        //   label: 'enabled',
-        //   value: config.mouseEnabled,
-        //   onChange: (v) => {
-        //     mesh.current.material.uniforms.uDistortion.value.z = v
-        //     // updateLocalStorage()
-        //   },
-        // },
         mouseStrength: {
           label: 'strength',
           value: defaults.mouseStrength,
@@ -163,15 +153,10 @@ export const useLeva = (
   }
   // }
 
-  // console.log(schema)
-
   // Could limit levaControls to empty object if !controls
   // Also need to pass controls as dependency so store rebuilds input schema
 
   const { image, uploadWaterfall } = useControls(schema, [controls])
-  // const { image } = useControls(schema)
-
-  // console.log(image)
 
   // const downloadBtn = document.querySelector('.leva-c-ihqPFh')
   // if (downloadBtn) {
@@ -186,8 +171,6 @@ export const useLeva = (
     defaults,
     config,
     updateConfig
-    // changes,
-    // (c) => setChanges(c),
   )
 
   useControls({ controls: folder(buttons, { order: 10 }) }, [controls, changes])

@@ -32,6 +32,7 @@ const Trail = forwardRef(({ fps }, ref) => {
     magFilter: THREE.NearestFilter,
     format: THREE.RGBAFormat,
     type: THREE.FloatType,
+    encoding: THREE.sRGBEncoding,
     // multisample: false,
     // stencilBuffer: false,
     // depthBuffer: false,

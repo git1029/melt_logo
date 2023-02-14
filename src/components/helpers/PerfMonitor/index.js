@@ -3,7 +3,7 @@ import { Perf } from 'r3f-perf'
 const PerfMonitor = () => {
   return (
     <Perf
-      position="top-left"
+      position="bottom-right"
       className="r3f-perf"
       style={{
         visibility: 'visible',

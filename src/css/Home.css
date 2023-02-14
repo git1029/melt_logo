@@ -1,6 +1,7 @@
 .home__container {
   min-height: 70vh;
 }
+
 .fade-in-up-element {
   opacity: 0;
   transform: translateY(50px);
@@ -11,6 +12,7 @@
   opacity: 1;
   transform: translateY(0);
 }
+
 .fade-in-up-element.visible.no-more {
   /* give time for transition effect before fade out */
   transition-delay: 2s;
@@ -29,6 +31,7 @@
   /* transition-timing-function: cubic-bezier(0.1, 1, 1.0, .1); */
   /* transition:  0.2s ease-out; */
 }
+
 .logo_knockout__holder {
   width: 100%;
   display: flex;
@@ -37,11 +40,13 @@
   position: sticky;
   top: 100px;
 }
+
 .shrinker {
   width: 100%;
   position: relative;
-  bottom: 15vh;
+  /* bottom: 15vh; */
 }
+
 .logo_knockout {
   width: 100%;
 }
@@ -53,6 +58,7 @@
   display: flex;
   justify-content: center;
 }
+
 .home__spacer {
   height: 5vh;
 }

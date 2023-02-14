@@ -35,6 +35,8 @@ const Scene = ({
 
   const { size, gl } = useThree()
 
+  // console.log(size)
+
   const defaults = controls
     ? localStorageConfig
       ? localStorageConfig

@@ -14,13 +14,15 @@
     "@react-three/drei": "^9.51.7",
     "@react-three/fiber": "^8.10.0",
     "axios": "^1.2.3",
+    "gotrue-js": "^0.9.29",
     "leva": "^0.9.34",
-    "netlify-identity-widget": "^1.9.2",
     "r3f-perf": "^6.6.3",
     "react": "^18.2.0",
     "react-dom": "18.2",
+    "react-hook-form": "^7.43.0",
     "react-router-dom": "^6.6.2",
     "react-scripts": "5.0",
+    "styled-components": "^5.3.6",
     "three": "^0.148.0"
   },
   "browserslist": {
@@ -40,5 +42,6 @@
     "eslint-config-prettier": "^8.6.0",
     "eslint-plugin-react": "^7.32.1",
     "eslint-plugin-react-hooks": "^4.6.0"
-  }
+  },
+  "proxy": "http://localhost:9999"
 }

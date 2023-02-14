@@ -4,7 +4,6 @@ import { useFrame, useThree, createPortal, useLoader } from '@react-three/fiber'
 import { useFBO, useTexture, PerspectiveCamera } from '@react-three/drei'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 
-// import { getLocalStorageConfig } from '../../helpers/LevaControls/setupConfig'
 import { useLeva } from './controls'
 
 import Trail from './Trail'
@@ -61,7 +60,6 @@ const Scene = forwardRef(
       [mesh, trail]
     )
 
-    // const [texture, logoTextureC] = useTexture([meltLogo, meltLogoFade])
     const texture = useTexture(
       upload === undefined || upload === null ? meltLogo : upload
     )
@@ -97,38 +95,21 @@ const Scene = forwardRef(
       const uniforms = {
         uTime: { value: 0 },
         uResolution: {
-          // value: new THREE.Vector4(
-          //   size.width, // size = px units, viewport = three.js units
-          //   size.height,
-          //   texture.source.data.width,
-          //   texture.source.data.height
-          // ),
           value: new THREE.Vector4(),
         },
         uDisp: {
-          // value: new THREE.Vector3(
-          //   config.displacementStrength,
-          //   config.colorNoise,
-          //   config.colorShift
-          // ),
           value: new THREE.Vector3(1, 1, 1),
         },
         uScene: { value: target.texture },
-        // uLogo: { value: texture },
-        // uLogoC: { value: logoTextureC },
         uLogo: { value: null },
         uLogoC: { value: null },
-        // uLogoC: { value: null },
         uShowMouse: { value: false },
         uNormal: { value: false },
         uTransition: { value: new THREE.Vector4(0, 0, -10, -10) },
-        PI: { value: Math.PI },
-        // uMouse: { value: new THREE.Vector2() },
-        refractionRatio: { value: 1 },
-        // uDPR: { value: viewport.dpr },
+        uRefractionRatio: { value: 1 },
         uDPR: { value: 1 },
-        uColor: { value: new THREE.Color(0x1b884b) },
         uFadeLast: { value: -10 },
+        PI: { value: Math.PI },
       }
 
       const mouse = {
@@ -182,21 +163,8 @@ const Scene = forwardRef(
       }
     }, [texture, textureFade, controls, upload, gl])
 
-    // // Get blurred image for color effect
-    // // Only run on load or if new image uploaded (debug mode only)
-    // // On live site should be a pre-made texture uploaded
-    // useEffect(() => {
-    //   // console.log(upload)
-    //   const blurTexture = blur(gl, 1024, 20, texture)
-
-    //   uniforms.uLogo.value = texture
-    //   uniforms.uLogoC.value = blurTexture
-    // }, [texture])
-
     // Handle viewport changes
     useEffect(() => {
-      // Update resolution uniform
-      // console.log('set size')
       if (mesh.current && mesh.current.material) {
         mesh.current.material.uniforms.uResolution.value.x = size.width
         mesh.current.material.uniforms.uResolution.value.y = size.height
@@ -321,7 +289,7 @@ const Scene = forwardRef(
       mesh.current.material.uniforms.uTime.value += delta
       const totalDelta = mesh.current.material.uniforms.uTime.value * 60
 
-      mesh.current.material.uniforms.refractionRatio.value =
+      mesh.current.material.uniforms.uRefractionRatio.value =
         1 - refractionRatio * mouse.smoothedVector * 0.01
 
       cam.current.position.x = mouse.prev.x * (mouseSpeed * 0.1) * 0.3
@@ -392,6 +360,9 @@ const Scene = forwardRef(
               uniforms={uniforms}
               side={THREE.FrontSide}
               wireframe={false}
+              transparent={true}
+              // eslint-disable-next-line react/no-unknown-property
+              toneMapped={false}
             />
           </mesh>
         </group>

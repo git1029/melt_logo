@@ -13,12 +13,6 @@ export const useFadeEffect = () => {
         uTransition.value.x = stage
         uTransition.value.w = uTransition.value.z
         uTransition.value.z = uTime.value
-        // console.log(
-        //   stage === 1 ? 'hide' : 'show',
-        //   uTransition.value,
-        //   uTransition.value.z - uTransition.value.w,
-        //   uFadeLast.value
-        // )
       }
     }
   }
