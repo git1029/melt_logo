@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { AuthContext } from './AuthContext'
 import {
   Title,
-  Text,
+  // Text,
   Form,
   Input,
   ButtonInput,
@@ -11,8 +11,11 @@ import {
   FormError,
 } from './Styled'
 import Notification from './Notification'
+import { useNavigate } from 'react-router-dom'
 
-const RecoveryForm = ({ updateMode }) => {
+export const CreateUserForm = ({ token }) => {
+  // console.log(token)
+
   const {
     register,
     handleSubmit,
@@ -22,20 +25,23 @@ const RecoveryForm = ({ updateMode }) => {
 
   const [message, setMessage] = useState(null)
 
-  const { recovery } = useContext(AuthContext)
+  const { create } = useContext(AuthContext)
 
-  const handleRecovery = async (data) => {
+  const navigate = useNavigate()
+
+  const handleCreateUser = async (data) => {
     // event.preventDefault()
 
     setMessage(null)
 
     try {
-      await recovery(data.email)
-      setMessage({
-        text: `Recovery email sent to ${data.email}`,
-        type: 'success',
-      })
-      setValue('email', '')
+      await create(token, data.password)
+      // setMessage({
+      //   text: `Recovery email sent to ${data.email}`,
+      //   type: 'success',
+      // })
+      setValue('password', '')
+      navigate('/admin')
     } catch (error) {
       setMessage({
         text: `${JSON.parse(error).json.msg}`,
@@ -44,36 +50,127 @@ const RecoveryForm = ({ updateMode }) => {
     }
   }
 
+  const handleCancelCreateUser = () => {
+    navigate('/')
+  }
+
   return (
     <>
-      <div className="admin-recovery-form">
-        <Title>Reset Password</Title>
-        <Text>
-          Enter an email address associated with your Netlify Account:
-        </Text>
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(0, 0, 0, 0.75)',
+          zIndex: 9999,
+        }}
+      >
+        <div
+          className="admin-login-form-container"
+          style={{
+            position: 'relative',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+          }}
+        >
+          <div className="admin-create-form">
+            <Title>Create Password</Title>
+            {/* <Text>
+            Enter an email address associated with your Netlify Account:
+          </Text> */}
 
-        <Form onSubmit={handleSubmit(handleRecovery)}>
-          <Input
-            {...register('email', { required: true })}
-            style={{ borderColor: errors.email ? 'orangered' : 'transparent' }}
-            placeholder="Email"
-            type="email"
-          />
-          {errors.email && <FormError>Email is required</FormError>}
-          <ButtonInput type="submit" value="Submit" />
-        </Form>
+            <Form onSubmit={handleSubmit(handleCreateUser)}>
+              <Input
+                {...register('password', { required: true })}
+                style={{
+                  borderColor: errors.password ? 'orangered' : 'transparent',
+                }}
+                placeholder="Password"
+                type="password"
+              />
+              {errors.password && <FormError>Password is required</FormError>}
+              {/* errors will return when field validation fails  */}
+              <ButtonInput type="submit" value="Submit" />
+            </Form>
 
-        <Notification message={message} />
+            <Notification message={message} />
 
-        <TextButton type="button" onClick={() => updateMode('login')}>
-          Cancel
-        </TextButton>
+            <TextButton type="button" onClick={handleCancelCreateUser}>
+              Cancel
+            </TextButton>
+          </div>
+        </div>
       </div>
     </>
   )
 }
 
-const LoginForm = ({ updateMode }) => {
+// const RecoveryForm = ({ updateMode }) => {
+//   const {
+//     register,
+//     handleSubmit,
+//     setValue,
+//     formState: { errors },
+//   } = useForm()
+
+//   const [message, setMessage] = useState(null)
+
+//   const { recovery } = useContext(AuthContext)
+
+//   const handleRecovery = async (data) => {
+//     // event.preventDefault()
+
+//     setMessage(null)
+
+//     try {
+//       await recovery(data.email)
+//       setMessage({
+//         text: `Recovery email sent to ${data.email}`,
+//         type: 'success',
+//       })
+//       setValue('email', '')
+//     } catch (error) {
+//       setMessage({
+//         text: `${JSON.parse(error).json.msg}`,
+//         type: 'error',
+//       })
+//     }
+//   }
+
+//   return (
+//     <>
+//       <div className="admin-recovery-form">
+//         <Title>Reset Password</Title>
+//         <Text>
+//           Enter an email address associated with your Netlify Account:
+//         </Text>
+
+//         <Form onSubmit={handleSubmit(handleRecovery)}>
+//           <Input
+//             {...register('email', { required: true })}
+//             style={{ borderColor: errors.email ? 'orangered' : 'transparent' }}
+//             placeholder="Email"
+//             type="email"
+//           />
+//           {errors.email && <FormError>Email is required</FormError>}
+//           <ButtonInput type="submit" value="Submit" />
+//         </Form>
+
+//         <Notification message={message} />
+
+//         <TextButton type="button" onClick={() => updateMode('login')}>
+//           Return to login
+//         </TextButton>
+//       </div>
+//     </>
+//   )
+// }
+
+// const LoginForm = ({ updateMode }) => {
+const LoginForm = () => {
   const {
     register,
     handleSubmit,
@@ -132,23 +229,28 @@ const LoginForm = ({ updateMode }) => {
 
         <Notification message={message} />
 
-        <TextButton type="button" onClick={() => updateMode('recovery')}>
+        {/* <TextButton type="button" onClick={() => updateMode('recovery')}>
           Forgot password?
-        </TextButton>
+        </TextButton> */}
       </div>
     </>
   )
 }
 
 const AdminForm = () => {
-  const [mode, setMode] = useState('login')
-  const updateMode = (value) => setMode(value)
+  // const [mode, setMode] = useState('login')
+  // const updateMode = (value) => setMode(value)
 
-  if (mode === 'recovery') {
-    return <RecoveryForm updateMode={updateMode} />
-  }
+  // if (mode === 'recovery') {
+  //   // return <RecoveryForm updateMode={updateMode} />
+  // }
 
-  return <LoginForm updateMode={updateMode} />
+  return (
+    <>
+      {/* <LoginForm updateMode={updateMode} /> */}
+      <LoginForm />
+    </>
+  )
 }
 
 export default AdminForm

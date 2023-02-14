@@ -1,5 +1,5 @@
 import { useState, useContext, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { AuthContext } from './AuthContext'
 import AdminForm from './AdminForm'
 import { Text, SmallButton, IFrame, Button } from './Styled'
@@ -81,11 +81,13 @@ const AdminLogout = () => {
   const { auth, logout } = useContext(AuthContext)
   const user = auth.currentUser()
 
+  const navigate = useNavigate()
+
   const handleLogout = async (event) => {
     event.preventDefault()
 
     await logout()
-    // navigate('/admin')
+    navigate('/admin')
   }
   return (
     <div className="admin-logout">

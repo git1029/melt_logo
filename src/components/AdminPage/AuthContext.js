@@ -64,7 +64,18 @@ export const AuthContextProvider = ({ children }) => {
     }
   }
 
-  const contextValues = { auth, user, login, logout, recovery }
+  const create = async (token, password) => {
+    // console.log(token, password)
+    try {
+      const response = await auth.acceptInvite(token, password, true)
+      console.log('User created', { response })
+    } catch (error) {
+      console.log('Error accepting invite', error)
+      throw JSON.stringify(error)
+    }
+  }
+
+  const contextValues = { auth, user, login, logout, recovery, create }
 
   return (
     <AuthContext.Provider value={contextValues}>
