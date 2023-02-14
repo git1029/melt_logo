@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import defaultConfig from './config.json'
+// import configService from '../../../services/configService'
 
 // const validateConfig = (config, defaultConfig) => {
 //   // Update default config with values of config
@@ -8,6 +9,16 @@ import defaultConfig from './config.json'
 
 export const useConfig = (name) => {
   // console.log('USECONFIG')
+
+  // useEffect(() => {
+  //   const getServerConfig = async () => {
+  //     const response = await configService.getConfig()
+  //     console.log('configservice', response)
+  //   }
+
+  //   getServerConfig()
+  // }, [])
+
   const baseConfig = getConfig(name, defaultConfig[name])
   const [config, setConfig] = useState(baseConfig)
   const updateConfig = (newConfig) => setConfig(newConfig)

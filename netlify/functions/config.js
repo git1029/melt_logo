@@ -23,7 +23,30 @@ exports.handler = (event, context, callback) => {
   }
 
   // const getSnippet = async () => {
+  //   console.log('getSnippet')
+  //   // eslint-disable-next-line no-undef
+  //   const KEY = process.env.REACT_APP_AIRTABLE_KEY
+  //   // eslint-disable-next-line no-undef
+  //   const URL = process.env.REACT_APP_AIRTABLE_ENDPOINT_URL
 
+  //   const response = await axios.get(URL, {
+  //     headers: {
+  //       Authorization: `Bearer ${KEY}`,
+  //     },
+  //   })
+  //   console.log(response.data.records)
+
+  //   const data = response.data.records.reduce((acc, record) => {
+  //     const id = record.id
+  //     const mode = record.fields.mode
+  //     const config = JSON.parse(record.fields.config)
+
+  //     return { ...acc, [mode]: { ...config, id } }
+  //   }, {})
+
+  //   return pass(200, {
+  //     config: data,
+  //   })
   // }
 
   const updateSnippet = async () => {
