@@ -22,7 +22,7 @@ import axios from 'axios'
 // eslint-disable-next-line no-undef
 const KEY = process.env.REACT_APP_AIRTABLE_KEY
 // eslint-disable-next-line no-undef
-const URL = process.env.REACT_APP_AIRTABLE_ENDPOINT_URL
+const URL = process.env.REACT_APP_AIRTABLE_ENDPOINT_URL_CONFIG
 
 const getConfig = async () => {
   const response = await axios.get(URL, {

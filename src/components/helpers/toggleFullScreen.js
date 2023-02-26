@@ -5,7 +5,7 @@ export const useToggleFullScreen = (iframeRef) => {
     const iframeCurrent = iframeRef.current
 
     const handleKeyPress = (e) => {
-      console.log(e)
+      // console.log(e)
 
       if (
         iframeCurrent.contentWindow.document.activeElement !==

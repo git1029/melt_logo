@@ -87,6 +87,21 @@ export const useLevaHelpers = (name, defaults, config, updateConfig) => {
   const saveStore = async () => {
     // Only if diff to values in snippet
 
+    // // PASSWORD CHECK
+    // // eslint-disable-next-line no-undef
+    // const password = process.env.SAVE_PASSWORD
+    // // Check localstorage for passowrd
+    // const localPassword = JSON.parse(window.localStorage.getItem('melt_save_key'))
+    // if (localPassword === null) {
+    //   // pop up
+    // } else {
+    //   // check if matches
+    //   if (localPassword !== password) {
+    //     window.localStorage.removeItem('melt_save_key')
+    //     // pop up
+    //   }
+    // }
+
     // console.log('SAVESTORE')
     const values = getStore()
     // console.log('values', values)

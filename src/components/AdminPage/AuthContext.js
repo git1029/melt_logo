@@ -18,10 +18,10 @@ export const AuthContextProvider = ({ children }) => {
     []
   )
 
-  console.log('AUTHCONTEXT')
+  // console.log('AUTHCONTEXT')
 
   useEffect(() => {
-    console.log('USEEFFECT AUTH')
+    // console.log('USEEFFECT AUTH')
     setUser(auth.currentUser())
   }, [auth])
 

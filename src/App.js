@@ -38,16 +38,13 @@ const App = () => {
       <Routes>
         <Route
           path="/logo-config"
-          // element={<Home controls={true}
           element={<LogoAnimation effectRef={null} controls={true} />}
         />
         <Route
           path="/waterfall"
           element={
             <>
-              {/* <div style={{ position: 'fixed', width: '100%', height: '100vh' }}> */}
               <WaterfallAnimation />
-              {/* </div> */}
               <h1>hello</h1>
             </>
           }
