@@ -100,10 +100,7 @@ const Home = ({ controls }) => {
       />
       <div className="logo_knockout__holder fade-in-up-element">
         <div className="shrinker">
-          <LogoAnimation
-            effectRef={effectRef}
-            controls={controls ? true : true}
-          />
+          <LogoAnimation effectRef={effectRef} controls={controls} />
         </div>
       </div>
 
