@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useFadeEffect } from './helpers/fadeEffect'
+// import { useFadeEffect } from './helpers/fadeEffect'
 import LogoAnimation from './LogoAnimation'
 import '../css/Home.css'
 
@@ -10,7 +10,8 @@ const Home = ({ controls }) => {
   // Handles logo animation scroll transition effect
   // effectRef needs to be passed to LogoAnimation below as:
   // <LogoAnimation effectRef={effectRef} />
-  const { effectRef, updateFadeEffect } = useFadeEffect()
+  // const { effectRef, updateFadeEffect } = useFadeEffect()
+  const effectRef = useRef()
 
   const [backgroundColor, setBackgroundColor] = useState('#000000')
   const [backgroundImage] = useState('none')
@@ -22,30 +23,63 @@ const Home = ({ controls }) => {
 
     const observer = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting) {
-        document.querySelector('.fade-in-up-element').classList.add('no-more')
+        // document.querySelector('.fade-in-up-element').classList.add('no-more')
 
+        // console.log('hide canvas')
         // update canvas on hide
-        updateFadeEffect(1)
+        // updateFadeEffect(1)
+
+        if (effectRef.current) {
+          if (effectRef.current.uniforms.uTransition.value.x !== 1) {
+            const { uTransition, uTime, uFadeLast } = effectRef.current.uniforms
+            uFadeLast.value = uTransition.value.y
+            uTransition.value.x = 1
+            uTransition.value.w = uTransition.value.z
+            uTransition.value.z = uTime.value
+          }
+        }
       }
     })
 
     observer.observe(fadeInRef.current)
-  }, [updateFadeEffect])
+
+    // return () => {
+    //   observer.disconnect()
+    // }
+    // }, [updateFadeEffect])
+  }, [])
 
   useEffect(() => {
     const observer = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting) {
-        document
-          .querySelector('.fade-in-up-element')
-          .classList.remove('no-more')
+        // document
+        //   .querySelector('.fade-in-up-element')
+        //   .classList.remove('no-more')
+
+        // console.log('show canvas')
 
         // update canvas on show
-        updateFadeEffect(0)
+        // updateFadeEffect(0)
+
+        if (effectRef.current) {
+          if (effectRef.current.uniforms.uTransition.value.x !== 0) {
+            const { uTransition, uTime, uFadeLast } = effectRef.current.uniforms
+            uFadeLast.value = uTransition.value.y
+            uTransition.value.x = 0
+            uTransition.value.w = uTransition.value.z
+            uTransition.value.z = uTime.value
+          }
+        }
       }
     })
 
     observer.observe(fadeInTriggerRef.current)
-  }, [updateFadeEffect])
+
+    // return () => {
+    //   observer.disconnect()
+    // }
+    // }, [updateFadeEffect])
+  }, [])
 
   return (
     <div
@@ -66,7 +100,10 @@ const Home = ({ controls }) => {
       />
       <div className="logo_knockout__holder fade-in-up-element">
         <div className="shrinker">
-          <LogoAnimation effectRef={effectRef} controls={controls} />
+          <LogoAnimation
+            effectRef={effectRef}
+            controls={controls ? true : true}
+          />
         </div>
       </div>
 
@@ -85,10 +122,14 @@ const Home = ({ controls }) => {
 
       <div
         style={{
-          height: '100vh',
+          height: '300vh',
           marginBottom: '100px',
           position: 'relative',
           zIndex: 99,
+        }}
+        onScroll={() => {
+          console.log('scroll')
+          // console.log(project0.current)
         }}
       >
         <div

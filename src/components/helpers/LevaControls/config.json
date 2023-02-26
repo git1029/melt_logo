@@ -1,6 +1,7 @@
 {
   "logo": {
     "title": "animation_config_logo",
+    "id": "recFooE90m1rPUtH2",
     "displacementStrength": 1,
     "displacementRadius": 1,
     "displacementDecay": 0.5,
@@ -22,6 +23,7 @@
   },
   "waterfall": {
     "title": "animation_config_waterfall",
+    "id": "recC4v79vXqb8v45J",
     "lineCount": 20,
     "lineSpeed": 1,
     "lineWidth": 0.5,

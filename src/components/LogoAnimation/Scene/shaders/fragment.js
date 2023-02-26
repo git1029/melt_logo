@@ -74,9 +74,12 @@ export default /* glsl */ `
 
     float ior = 1. + (1.-uRefractionRatio);
 
+    // ior = 1.;
+    ior = mix(ior, 1., ft);
+
     vec3 refracted = refract(ev, normal, 1.0/ior);
     refracted.xy /= vec2(uResolution.x/uResolution.y, 1.); 
-    refracted.xy *= 1.-ft;
+    // refracted.xy *= 1.-ft;
 
     uv += refracted.xy;
 
@@ -108,6 +111,7 @@ export default /* glsl */ `
     float strength = map(uDisp.x, 0., 1., 0., 0.3);
     vec2 off = vec2(x, y) * c.a * strength * c.b; // 0.15
 
+    ft = 0.;
     
     float noise = map(uDisp.y, 0., 2., 0., 0.04);
     // NOISE seems to go funny at very high uTime - fix by resetting or removing uTime
@@ -141,7 +145,10 @@ export default /* glsl */ `
     // color += c3 * smoothstep(0., 1., sin(uTime * 0. + uv.x * uv.y * 8. * (1.-ft)) *.5 + .5);
     color += c3;
 
-    color.a = clamp((color.r + color.g + color.b) / 1., 0., 1.);
+    ft = cubicInOut(uTransition.y);
+    color.a = clamp((color.r + color.g + color.b) / mix(1., 3., ft), 0., 1.);
+    color.a = mix(color.a, smoothstep(.2, 1., color.a), ft);
+    color.a *= mix(1., .5, ft);
 
     color += c * float(uShowMouse);
     color += vec4(normal, 1.) * float(uNormal);

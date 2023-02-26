@@ -44,9 +44,12 @@ const App = () => {
         <Route
           path="/waterfall"
           element={
-            <div>
+            <>
+              {/* <div style={{ position: 'fixed', width: '100%', height: '100vh' }}> */}
               <WaterfallAnimation />
-            </div>
+              {/* </div> */}
+              <h1>hello</h1>
+            </>
           }
         />
         <Route

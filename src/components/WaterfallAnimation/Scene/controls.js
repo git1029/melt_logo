@@ -95,7 +95,7 @@ export const useLeva = (
         },
         lineDistortion: {
           label: 'distortion',
-          value: config.lineDistortion,
+          value: defaults.lineDistortion,
           min: 0,
           max: 1,
           step: 0.01,

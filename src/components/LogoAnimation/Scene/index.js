@@ -311,6 +311,25 @@ const Scene = forwardRef(
       animate(delta)
       getFadeTime()
 
+      // const el = document.querySelector('.project')
+      // if (el) {
+      //   const rect = el.getBoundingClientRect()
+      //   // console.log(rect.top < window.innerHeight / 2)
+
+      //   let stage = rect.top < window.innerHeight / 2 ? 1 : 0
+
+      //   if (mesh.current) {
+      //     if (mesh.current.material.uniforms.uTransition.value.x !== stage) {
+      //       const { uTransition, uTime, uFadeLast } =
+      //         mesh.current.material.uniforms
+      //       uFadeLast.value = uTransition.value.y
+      //       uTransition.value.x = stage
+      //       uTransition.value.w = uTransition.value.z
+      //       uTransition.value.z = uTime.value
+      //     }
+      //   }
+      // }
+
       state.gl.setRenderTarget(target)
       state.gl.clear()
       state.gl.render(scene, camera)

@@ -25,17 +25,16 @@ const Scene = ({
   config,
   updateConfig,
   localStorageConfig,
+  canvasRef,
 }) => {
   const mesh = useRef()
 
   const [blurStrength, setBlurStrength] = useState(2)
   const updateBlurStrength = (value) => setBlurStrength(value)
 
-  const imageOptions = { smiley, melt: meltLogo }
+  const imageOptions = { melt: meltLogo, smiley }
 
   const { size, gl } = useThree()
-
-  // console.log(size)
 
   const defaults = controls
     ? localStorageConfig
@@ -69,7 +68,7 @@ const Scene = ({
       return image
     }
 
-    return smiley
+    return meltLogo
   }
 
   const texture = useTexture(textureSource())
@@ -90,23 +89,10 @@ const Scene = ({
   // }, [controls, texture, blurStrength])
 
   const [uniforms, mouse] = useMemo(() => {
-    // const {
-    //   lineCount,
-    //   lineSpeed,
-    //   lineWidth,
-    //   lineDistortion,
-    //   lineColor,
-    //   colorShift,
-    //   mouseEnabled,
-    //   mouseStrength,
-    //   imageStrength,
-    // } = config
-
     const mouse = new THREE.Vector2()
 
     const uniforms = {
       uImage: { value: null },
-      // uColor: { value: new THREE.Color(lineColor) },
       uColor: { value: new THREE.Color(0xffffff) },
       uTime: { value: 0 },
       uResolution: {
@@ -114,22 +100,14 @@ const Scene = ({
       },
       PI: { value: Math.PI },
       uLine: {
-        // value: new THREE.Vector4(lineCount, lineSpeed, lineWidth, colorShift),
         value: new THREE.Vector4(20, 1, 0.5, 0.5),
       },
       uDistortion: {
-        // value: new THREE.Vector4(
-        //   imageStrength,
-        //   lineDistortion,
-        //   mouseEnabled,
-        //   mouseStrength
-        // ),
         value: new THREE.Vector4(0.5, 0.5, true, 1),
       },
       uMouse: { value: mouse },
-      // uNoise: { value: noiseTexture },
       uNoise: { value: null },
-      // uDist: { value: distance },
+      uTransition: { value: new THREE.Vector4(0, 0, 3, 7) },
     }
 
     return [uniforms, mouse]
@@ -211,7 +189,31 @@ const Scene = ({
     mouse.y += (state.mouse.y - mouse.y) * delta * 5
 
     mesh.current.material.uniforms.uMouse.value.set(mouse.x, mouse.y)
+
+    if (!controls) handleFadeOut()
   })
+
+  const handleFadeOut = () => {
+    const time = mesh.current.material.uniforms.uTime.value
+    const t = mesh.current.material.uniforms.uTransition.value.w
+    if (mesh.current.material.uniforms.uTransition.value.x === 0 && time > t) {
+      mesh.current.material.uniforms.uTransition.value.x = 1
+      mesh.current.material.uniforms.uTransition.value.y = time
+
+      // console.log(
+      //   mesh.current.material.uniforms.uTransition.value.x,
+      //   mesh.current.material.uniforms.uTransition.value.y
+      // )
+    }
+
+    if (canvasRef.current) {
+      if (time > t + 3.5 && canvasRef.current.style.display === 'block') {
+        canvasRef.current.style.display = 'none'
+        // console.log(time)
+        // console.log('hide canvas')
+      }
+    }
+  }
 
   return (
     <>
@@ -228,12 +230,23 @@ const Scene = ({
         manual
       />
 
-      <mesh ref={mesh}>
+      <mesh
+        ref={mesh}
+        onClick={() => {
+          const time = mesh.current.material.uniforms.uTime.value
+          const tmin = mesh.current.material.uniforms.uTransition.value.z
+          const tmax = mesh.current.material.uniforms.uTransition.value.w
+          if (time >= tmin && time < tmax) {
+            mesh.current.material.uniforms.uTransition.value.w = time
+          }
+        }}
+      >
         <planeGeometry args={[2, 2]} />
         <shaderMaterial
           vertexShader={vertexShader}
           fragmentShader={fragmentShader}
           uniforms={uniforms}
+          transparent={true}
           // wireframe={true}
         />
       </mesh>

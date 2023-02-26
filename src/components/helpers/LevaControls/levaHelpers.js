@@ -89,14 +89,16 @@ export const useLevaHelpers = (name, defaults, config, updateConfig) => {
 
     // console.log('SAVESTORE')
     const values = getStore()
-    console.log(values)
+    // console.log('values', values)
 
     // Only send sub config (i.e. logo or waterfall)
     try {
       const savedConfig = await configService.updateConfig(values)
       // console.log('saved levaHelpers', savedConfig)
+      // console.log('saved levaHelpers', JSON.parse(savedConfig.fields.config))
 
-      updateConfig(savedConfig.config)
+      // updateConfig(savedConfig.config) // snippet
+      updateConfig(JSON.parse(savedConfig.fields.config)) // airtable
     } catch (error) {
       console.log(error)
     }
