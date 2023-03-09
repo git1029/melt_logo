@@ -17,12 +17,21 @@ export const useConfig = (name) => {
 
   useEffect(() => {
     const getServerConfig = async () => {
+      // add try catch
       const response = await configService.getConfig()
       // console.log('configservice', response)
       // console.log('configservice', response[name])
 
-      if (response[name] !== undefined) {
+      if (response !== null && response[name] !== undefined) {
+        // console.log('setting config')
+        if (response[name].id !== defaultConfig[name].id) {
+          console.log(
+            `Mismatching record ids: ${response[name].id}, ${defaultConfig[name].id}`
+          )
+        }
         setConfig(response[name])
+      } else {
+        console.log(`Config ${name} not found on server`)
       }
     }
 
@@ -42,6 +51,12 @@ export const getLocalStorageConfig = (name) => {
   // Update store only (set state config to snippet/default so can compare for changes)
   const localConfig = JSON.parse(window.localStorage.getItem('melt_config'))
   if (localConfig !== null && localConfig[name]) {
+    if (localConfig[name].id !== defaultConfig[name].id) {
+      console.log(
+        `Mismatching record ids: ${localConfig[name].id}, ${defaultConfig[name].id}`
+      )
+    }
+
     return localConfig[name]
   }
   return null

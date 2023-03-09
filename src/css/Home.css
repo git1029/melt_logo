@@ -38,7 +38,9 @@
   justify-content: center;
   align-items: center;
   position: sticky;
-  top: 100px;
+  /* top: 100px; */
+  top: 0;
+  height: 100vh;
 }
 
 .shrinker {

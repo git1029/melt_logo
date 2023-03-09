@@ -11,6 +11,8 @@ export default /* glsl */ `
   uniform vec4 uTransition;
   uniform float uRefractionRatio;
   uniform float PI;
+  uniform float uControls;
+  uniform float uImgScl;
 
   varying vec3 worldNormal;
   varying vec3 eyeVector;
@@ -49,20 +51,39 @@ export default /* glsl */ `
     );
     vec2 aspectI = vec2(1.);
     
-    vec2 imgScale = aspectI * aspectS;
+    vec2 imgScale = aspectI * aspectS / uImgScl;
     vec2 imgOff = vec2(
-      aspectS.x > aspectI.x ? (aspectS.x - aspectI.x) * .5 : 0.,
-      aspectS.y > aspectI.y ? (aspectS.y - aspectI.y) * .5 : 0.
+      // aspectS.x > aspectI.x ? (aspectS.x - aspectI.x) * .5 : 0.,
+      // aspectS.y > aspectI.y ? (aspectS.y - aspectI.y) * .5 : 0.
+      (aspectS.x - aspectI.x * uImgScl) * .5 / uImgScl,
+      (aspectS.y - aspectI.y * uImgScl) * .5 / uImgScl
     );
 
-    if (aspectS.x > 1.) {
-      float scl = min(2560. / uResolution.y, aspectS.x);
-      imgScale /= scl;
-      imgOff = vec2(
-        aspectS.x - scl,
-        aspectS.y - scl
-      ) * 0.5 / scl;
-    }
+    // imgOff += 0.5;
+
+    // if (aspectS.x > 1.) {
+    //   float scl = min(2560. / uResolution.y, aspectS.x);
+    //   imgScale /= scl;
+    //   // imgOff += vec2(
+    //   //   aspectS.x - scl,
+    //   //   aspectS.y - scl
+    //   // ) * 0.5 / scl;
+    // }
+
+
+    // imgScale /= uImgScl;
+    // imgOff -= uImgScl;
+    // imgOff *= (1. * .5) / uImgScl;
+    // imgOff += (1. * .5) / uImgScl;
+
+
+    // imgOff.x += imgScale.x * uImgScl >= aspectS.x ? -((imgScale.x * uImgScl) - aspectS.x) * .25 : (imgScale.x - (imgScale.x * uImgScl));
+    // imgScale /= uImgScl;
+    // imgOff.x += (1.-uImgScl) / 2. * aspectS.x;
+    // imgOff *= uImgScl;
+
+
+    // imgScale /= uImgScl;
 
     float ft = cubicInOut(uTransition.y);
 
@@ -83,7 +104,7 @@ export default /* glsl */ `
 
     uv += refracted.xy;
 
-    float uvScl = 0.75;
+    float uvScl = 0.75; // 0.75
     uv *= uvScl;
     uv += (1.-uvScl)/2.;
     uv = uv * imgScale - imgOff;
@@ -146,9 +167,10 @@ export default /* glsl */ `
     color += c3;
 
     ft = cubicInOut(uTransition.y);
-    color.a = clamp((color.r + color.g + color.b) / mix(1., 3., ft), 0., 1.);
-    color.a = mix(color.a, smoothstep(.2, 1., color.a), ft);
-    color.a *= mix(1., .5, ft);
+    float a = clamp((color.r + color.g + color.b) / mix(1., 3., ft), 0., 1.);
+    a = mix(a, smoothstep(.2, 1., a), ft);
+    a *= mix(1., .25, ft);
+    color.a = mix(a, 1., uControls);
 
     color += c * float(uShowMouse);
     color += vec4(normal, 1.) * float(uNormal);

@@ -20,7 +20,19 @@ import { blur } from '../../helpers/blurTexture'
 // https://eriksachse.medium.com/react-three-fiber-custom-postprocessing-render-target-solution-without-using-the-effectcomposer-d3a94e6ae3c3
 
 const Scene = forwardRef(
-  ({ fps, name, controls, config, updateConfig, localStorageConfig }, ref) => {
+  (
+    {
+      fps,
+      name,
+      controls,
+      config,
+      updateConfig,
+      localStorageConfig,
+      containerRef,
+      updateName,
+    },
+    ref
+  ) => {
     const cam = useRef()
     const mesh = useRef()
     const trail = useRef()
@@ -45,6 +57,7 @@ const Scene = forwardRef(
     // }, [])
 
     const {
+      deviceSize,
       upload,
       mouseArea,
       refractionRatio,
@@ -103,12 +116,14 @@ const Scene = forwardRef(
         uScene: { value: target.texture },
         uLogo: { value: null },
         uLogoC: { value: null },
+        uImgScl: { value: 1 },
         uShowMouse: { value: false },
         uNormal: { value: false },
         uTransition: { value: new THREE.Vector4(0, 0, -10, -10) },
         uRefractionRatio: { value: 1 },
         uDPR: { value: 1 },
         uFadeLast: { value: -10 },
+        uControls: { value: controls ? 1 : 0 },
         PI: { value: Math.PI },
       }
 
@@ -122,7 +137,7 @@ const Scene = forwardRef(
       const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1)
 
       return [scene, uniforms, camera, mouse]
-    }, [target.texture])
+    }, [target.texture, controls])
 
     useEffect(() => {
       if (mesh.current && mesh.current.material) {
@@ -187,6 +202,23 @@ const Scene = forwardRef(
         cam.current.updateProjectionMatrix()
       }
     }, [size])
+
+    useEffect(() => {
+      if (containerRef.current && deviceSize) {
+        // containerRef.current.style.width = `${deviceSize.width}px`
+        // containerRef.current.style.height = `${deviceSize.height}px`
+        // containerRef.current.style.width = deviceSize.width
+        // containerRef.current.style.height = deviceSize.height
+      }
+    }, [deviceSize, containerRef])
+
+    useEffect(() => {
+      if (!controls) {
+        if (size.height < 1000 && name !== 'logo-mobile')
+          updateName('logo-mobile')
+        else if (size.height >= 1000 && name !== 'logo') updateName('logo')
+      }
+    }, [size, updateName, controls, name])
 
     const updateMouseMovement = () => {
       let a = {

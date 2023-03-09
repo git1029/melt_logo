@@ -41,6 +41,12 @@ const App = () => {
           element={<LogoAnimation effectRef={null} controls={true} />}
         />
         <Route
+          path="/logo-config-mobile"
+          element={
+            <LogoAnimation effectRef={null} controls={true} mobile={true} />
+          }
+        />
+        <Route
           path="/waterfall"
           element={
             <>
@@ -57,6 +63,14 @@ const App = () => {
             </div>
           }
         />
+        <Route
+          path="/waterfall-config-mobile"
+          element={
+            <div>
+              <WaterfallAnimation controls mobile={true} />
+            </div>
+          }
+        />
         <Route path="/admin" element={<AdminPage />} />
         <Route
           path="/admin/logo"
@@ -69,10 +83,31 @@ const App = () => {
           }
         />
         <Route
+          path="/admin/logo-mobile"
+          element={
+            user ? (
+              <LogoAnimation effectRef={null} controls={true} mobile={true} />
+            ) : (
+              <Navigate to="/admin" replace />
+            )
+          }
+        />
+        <Route
           path="/admin/waterfall"
           element={
             user ? (
               <WaterfallAnimation controls={true} />
+            ) : (
+              <Navigate to="/admin" replace />
+            )
+          }
+        />
+
+        <Route
+          path="/admin/waterfall-mobile"
+          element={
+            user ? (
+              <WaterfallAnimation controls={true} mobile={true} />
             ) : (
               <Navigate to="/admin" replace />
             )

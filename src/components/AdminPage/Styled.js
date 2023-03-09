@@ -53,6 +53,11 @@ export const Input = styled.input`
 
 export const Button = styled.button`
   ${buttonStyle}
+
+  @media screen and (max-width: 960px) {
+    font-size: 14px;
+    padding: 8px;
+  }
 `
 
 export const ButtonInput = styled.input`

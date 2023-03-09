@@ -73,7 +73,7 @@ export const useLevaHelpers = (name, defaults, config, updateConfig) => {
     updateLocalStorage()
     setChanges(false)
     // updateChanges()
-  }, [config, updateLocalStorage])
+  }, [updateLocalStorage, config])
 
   const downloadStore = useCallback(() => {
     downloadConfig(name, JSON.stringify(getStore()))
@@ -113,7 +113,7 @@ export const useLevaHelpers = (name, defaults, config, updateConfig) => {
       // console.log('saved levaHelpers', JSON.parse(savedConfig.fields.config))
 
       // updateConfig(savedConfig.config) // snippet
-      updateConfig(JSON.parse(savedConfig.fields.config)) // airtable
+      updateConfig(savedConfig) // airtable
     } catch (error) {
       console.log(error)
     }
@@ -169,5 +169,17 @@ export const useLevaHelpers = (name, defaults, config, updateConfig) => {
     ),
   }
 
+  // const deviceSchema = {
+  //   deviceSize: {
+  //     label: 'size',
+  //     options: {
+  //       desktop: { width: '100%', height: '100vh' },
+  //       mobile: { width: '390px', height: '844px' }, // iPhone 14
+  //       // laptop: { width: 400, height: 600 },
+  //     },
+  //   },
+  // }
+
+  // return { buttons: buttonsSchema, device: deviceSchema, changes }
   return { buttons: buttonsSchema, changes }
 }

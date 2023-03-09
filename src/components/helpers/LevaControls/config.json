@@ -1,7 +1,7 @@
 {
   "logo": {
     "title": "animation_config_logo",
-    "id": "recFooE90m1rPUtH2",
+    "id": "rec7uFxwt6xvPNpvD",
     "displacementStrength": 1,
     "displacementRadius": 1,
     "displacementDecay": 0.5,
@@ -19,11 +19,35 @@
       "x": -9,
       "y": -3,
       "z": 3
-    }
+    },
+    "imageScale": 1
+  },
+  "logo-mobile": {
+    "title": "animation_config_logo_mobile",
+    "id": "recouUFsSjE2mi1zd",
+    "displacementStrength": 1,
+    "displacementRadius": 1,
+    "displacementDecay": 0.5,
+    "colorNoise": 1,
+    "colorShift": 1,
+    "refractionRatio": 17,
+    "mouseSpeed": 20,
+    "mouseArea": 0.9,
+    "rotAngle": {
+      "x": 90,
+      "y": 50,
+      "z": 145
+    },
+    "rotSpeed": {
+      "x": -9,
+      "y": -3,
+      "z": 3
+    },
+    "imageScale": 1
   },
   "waterfall": {
     "title": "animation_config_waterfall",
-    "id": "recC4v79vXqb8v45J",
+    "id": "recDo4ymkcLDeO1bk",
     "lineCount": 20,
     "lineSpeed": 1,
     "lineWidth": 0.5,
@@ -32,6 +56,21 @@
     "colorShift": 0.5,
     "imageStrength": 0.5,
     "mouseEnabled": true,
-    "mouseStrength": 1
+    "mouseStrength": 1,
+    "imageScale": 1
+  },
+  "waterfall-mobile": {
+    "title": "animation_config_waterfall_mobile",
+    "id": "rectu3rbrpw4uKrvT",
+    "lineCount": 20,
+    "lineSpeed": 1,
+    "lineWidth": 0.5,
+    "lineDistortion": 0.5,
+    "lineColor": "#ffffff",
+    "colorShift": 0.5,
+    "imageStrength": 0.5,
+    "mouseEnabled": true,
+    "mouseStrength": 1,
+    "imageScale": 1
   }
 }

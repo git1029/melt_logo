@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import LevaControls from '../helpers/LevaControls'
 import PerfMonitor from '../helpers/PerfMonitor'
@@ -17,37 +18,58 @@ const created = ({ gl }) => {
   gl.setClearAlpha(0)
 }
 
-const name = 'waterfall'
+const WaterfallAnimation = ({ controls, mobile }) => {
+  const [name, setName] = useState(
+    (mobile && controls) || window.innerHeight < 1000
+      ? 'waterfall-mobile'
+      : 'waterfall'
+  )
+  const updateName = (newName) => {
+    // console.log('setting name', newName)
+    setName(newName)
+  }
 
-const WaterfallAnimation = ({ controls }) => {
+  useEffect(() => {
+    if (controls) {
+      document.body.classList.add('controls')
+    } else {
+      document.body.classList.remove('controls')
+    }
+  }, [controls])
+
   const [config, updateConfig] = useConfig(name)
   const localStorageConfig = getLocalStorageConfig(name)
   useToggleControls(controls === undefined ? false : controls)
 
-  const canvas = useRef()
+  // console.log(config)
+
+  const container = useRef()
 
   return (
     <>
       <LevaControls controls={controls === undefined ? false : controls} />
       <div
+        ref={container}
         style={{
-          width: '100%',
-          height: '100vh',
+          width: mobile && controls ? '390px' : '100%',
+          height: mobile && controls ? '844px' : '100vh',
+          // padding: mobile && controls ? '20px' : '0',
           display: 'block',
           position: 'fixed',
           top: 0,
         }}
-        ref={canvas}
       >
         <Canvas dpr={[1, 2]} gl={glSettings} onCreated={created}>
           {controls ? <PerfMonitor /> : null}
+          {/* <PerfMonitor /> */}
           <Scene
             name={name}
             controls={controls === undefined ? false : controls}
             config={config}
             updateConfig={updateConfig}
             localStorageConfig={localStorageConfig}
-            canvasRef={canvas}
+            containerRef={container}
+            updateName={updateName}
           />
         </Canvas>
       </div>

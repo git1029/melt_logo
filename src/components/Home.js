@@ -91,9 +91,11 @@ const Home = ({ controls }) => {
     >
       <div
         style={{
-          position: 'relative',
+          // position: 'relative',
+          position: 'absolute',
           top: '50vh',
           height: '20px',
+          width: '100%',
         }}
         ref={fadeInTriggerRef}
         className="fadeInTrigger"

@@ -27,6 +27,17 @@ export const useLeva = (
           image: null,
           order: -3,
         },
+        imageScale: {
+          label: 'scale',
+          value: 1,
+          min: 0.1,
+          max: 2,
+          step: 0.01,
+          onChange: (v) => {
+            if (!mesh.current) return
+            mesh.current.material.uniforms.uImgScl.value = v
+          },
+        },
         blurStrength: {
           label: 'blur',
           value: 2,
@@ -54,6 +65,7 @@ export const useLeva = (
           max: 1,
           step: 0.01,
           onChange: (v) => {
+            if (!mesh.current) return
             mesh.current.material.uniforms.uDistortion.value.x = v
           },
           order: 0,
@@ -70,6 +82,7 @@ export const useLeva = (
           max: 50,
           step: 1,
           onChange: (v) => {
+            if (!mesh.current) return
             mesh.current.material.uniforms.uLine.value.x = v
           },
         },
@@ -80,6 +93,7 @@ export const useLeva = (
           max: 3,
           step: 0.1,
           onChange: (v) => {
+            if (!mesh.current) return
             mesh.current.material.uniforms.uLine.value.y = v
           },
         },
@@ -90,6 +104,7 @@ export const useLeva = (
           max: 1,
           step: 0.01,
           onChange: (v) => {
+            if (!mesh.current) return
             mesh.current.material.uniforms.uLine.value.z = v
           },
         },
@@ -100,6 +115,7 @@ export const useLeva = (
           max: 1,
           step: 0.01,
           onChange: (v) => {
+            if (!mesh.current) return
             mesh.current.material.uniforms.uDistortion.value.y = v
           },
         },
@@ -107,6 +123,7 @@ export const useLeva = (
           label: 'color',
           value: defaults.lineColor,
           onChange: (v) => {
+            if (!mesh.current) return
             mesh.current.material.uniforms.uColor.value = new THREE.Color(v)
           },
         },
@@ -117,6 +134,7 @@ export const useLeva = (
           max: 1,
           step: 0.01,
           onChange: (v) => {
+            if (!mesh.current) return
             mesh.current.material.uniforms.uLine.value.w = v
           },
         },
@@ -132,6 +150,7 @@ export const useLeva = (
           max: 1,
           step: 0.01,
           onChange: (v) => {
+            if (!mesh.current) return
             mesh.current.material.uniforms.uDistortion.value.w = v
           },
         },
@@ -166,6 +185,7 @@ export const useLeva = (
   //   }
   // }
 
+  // const { buttons, device, changes } = useLevaHelpers(
   const { buttons, changes } = useLevaHelpers(
     name,
     defaults,
@@ -173,9 +193,18 @@ export const useLeva = (
     updateConfig
   )
 
-  useControls({ controls: folder(buttons, { order: 10 }) }, [controls, changes])
+  // const { deviceSize } = useControls(
+  //   { device: folder(device, { order: -10 }) },
+  //   [controls]
+  // )
+  useControls({ controls: folder(buttons, { order: 10 }) }, [
+    controls,
+    changes,
+    config,
+  ])
 
   return {
+    // deviceSize: controls ? deviceSize : null,
     upload: controls ? uploadWaterfall : null,
     image: controls ? image : null,
   }

@@ -46,8 +46,19 @@ const AdminPageLoggedOut = () => {
 
 const AdminNav = ({ updateMode }) => {
   const buttons = [
-    { text: 'Logo', ref: useRef(), className: 'selected' },
-    { text: 'Waterfall', ref: useRef(), className: '' },
+    { path: 'logo', label: 'Logo', ref: useRef(), className: 'selected' },
+    {
+      path: 'logo-mobile',
+      label: 'Logo (Mobile)',
+      ref: useRef(),
+    },
+    { path: 'waterfall', label: 'Waterfall', ref: useRef(), className: '' },
+    {
+      path: 'waterfall-mobile',
+      label: 'Waterfall (Mobile)',
+      ref: useRef(),
+      className: '',
+    },
   ]
 
   const handleClick = (target) => {
@@ -55,7 +66,8 @@ const AdminNav = ({ updateMode }) => {
       .filter((b) => b !== target.ref.current)
       .forEach((b) => b.ref.current.classList.remove('selected'))
     target.ref.current.classList.add('selected')
-    updateMode(target.text.toLowerCase())
+    // updateMode(target.text.toLowerCase())
+    updateMode(target.path)
   }
 
   return (
@@ -65,11 +77,11 @@ const AdminNav = ({ updateMode }) => {
           <Button
             light
             className={b.className}
-            key={b.text}
+            key={b.path}
             ref={b.ref}
             onClick={() => handleClick(b)}
           >
-            {b.text}
+            {b.label}
           </Button>
         ))}
       </div>

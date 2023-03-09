@@ -17,9 +17,19 @@ export const useLeva = (
   const schema = {
     image: folder(
       {
-        uploadLogo: {
+        imageUpload: {
           label: 'upload',
           image: null,
+        },
+        imageScale: {
+          label: 'scale',
+          value: 1,
+          min: 0.1,
+          max: 2,
+          step: 0.01,
+          onChange: (v) => {
+            mesh.current.material.uniforms.uImgScl.value = v
+          },
         },
       },
       { order: -4 }
@@ -163,7 +173,7 @@ export const useLeva = (
   // Also need to pass controls as dependency so store rebuilds input schema
 
   const {
-    uploadLogo,
+    imageUpload,
     mouseArea,
     refractionRatio,
     mouseSpeed,
@@ -171,6 +181,7 @@ export const useLeva = (
     rotSpeed,
   } = useControls(schema, [controls])
 
+  // const { buttons, device, changes } = useLevaHelpers(
   const { buttons, changes } = useLevaHelpers(
     name,
     defaults,
@@ -178,10 +189,19 @@ export const useLeva = (
     updateConfig
   )
 
-  useControls({ controls: folder(buttons, { order: 10 }) }, [controls, changes])
+  // const { deviceSize } = useControls(
+  //   { device: folder(device, { order: -10 }) },
+  //   [controls]
+  // )
+  useControls({ controls: folder(buttons, { order: 10 }) }, [
+    controls,
+    changes,
+    config,
+  ])
 
   return {
-    upload: controls ? uploadLogo : null,
+    // deviceSize: controls ? deviceSize : null,
+    upload: controls ? imageUpload : null,
     mouseArea: controls ? mouseArea : config.mouseArea,
     refractionRatio: controls ? refractionRatio : config.refractionRatio,
     mouseSpeed: controls ? mouseSpeed : config.mouseSpeed,

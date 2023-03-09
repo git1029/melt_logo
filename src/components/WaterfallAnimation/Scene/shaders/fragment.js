@@ -11,6 +11,7 @@ export default /* glsl */ `
   uniform vec4 uDistortion; // (strength, distortion, mouseEnabled, mouseStrength)
   uniform vec2 uMouse;
   uniform vec4 uTransition;
+  uniform float uImgScl;
 
   float rand(vec2 co){
     return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
@@ -25,10 +26,18 @@ export default /* glsl */ `
     );
     vec2 aspectI = vec2(uResolution.z / uResolution.w);
     
-    vec2 imgScale = aspectI * aspectS;
+    // vec2 imgScale = aspectI * aspectS;
+    // vec2 imgOff = vec2(
+    //   aspectS.x > aspectI.x ? (aspectS.x - aspectI.x) * .5 : 0.,
+    //   aspectS.y > aspectI.y ? (aspectS.y - aspectI.y) * .5 : 0.
+    // );
+
+    vec2 imgScale = aspectI * aspectS / uImgScl;
     vec2 imgOff = vec2(
-      aspectS.x > aspectI.x ? (aspectS.x - aspectI.x) * .5 : 0.,
-      aspectS.y > aspectI.y ? (aspectS.y - aspectI.y) * .5 : 0.
+      // aspectS.x > aspectI.x ? (aspectS.x - aspectI.x) * .5 : 0.,
+      // aspectS.y > aspectI.y ? (aspectS.y - aspectI.y) * .5 : 0.
+      (aspectS.x - aspectI.x * uImgScl) * .5 / uImgScl,
+      (aspectS.y - aspectI.y * uImgScl) * .5 / uImgScl
     );
 
     // if (aspectS.x > 1.) {
@@ -124,12 +133,16 @@ export default /* glsl */ `
     y += (t) * speed;
 
     // Transition out
+    // float resF = uResolution.y < 500. ? 0.25 : uResolution.y < 1000. ? map(uResolution.y, 500., 1000., 0.25, 1.) : 1.;
+    // resF = 1.;
+    // float lineCount = uLine.x > 1. ? floor(uLine.x * resF) : uLine.x;
+    float lineCount = uLine.x;
     y -= (uTransition.y) * uLine.y * speed;
-    y -= 1./uLine.x - mod(uTransition.y * uLine.y * speed, 1./uLine.x);
+    y -= 1./lineCount - mod(uTransition.y * uLine.y * speed, 1./lineCount);
     y += tfade * 1.;
 
     vec3 c = vec3(uTransition.x == 0. ? y : clamp(y, 0., 1.));
-    c = mod(c * uLine.x, 1.);
+    c = mod(c * lineCount, 1.);
   
     float cf = uLine.w * 2.;
     c.r += (.2 + d + rc) * sin(uTime + vUv.x * vUv.y + ny) * fy * cf;

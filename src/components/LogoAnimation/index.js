@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { PerformanceMonitor } from '@react-three/drei'
 import LevaControls from '../helpers/LevaControls'
@@ -17,23 +17,51 @@ const created = ({ gl }) => {
   gl.domElement.id = 'logoAnimation'
 }
 
-const name = 'logo'
+// const name = 'logo'
 
-const LogoAnimation = ({ controls, effectRef }) => {
+const LogoAnimation = ({ controls, effectRef, mobile }) => {
+  const [name, setName] = useState(
+    (mobile && controls) || window.innerHeight < 1000 ? 'logo-mobile' : 'logo'
+  )
+  const updateName = (newName) => {
+    // console.log('setting name', newName)
+    setName(newName)
+  }
+
+  useEffect(() => {
+    if (controls) {
+      document.body.classList.add('controls')
+    } else {
+      document.body.classList.remove('controls')
+    }
+
+    // if (mobile && controls) {
+    //   setName('logo-mobile')
+    // }
+  }, [controls])
+
   const [sceneFps, setSceneFps] = useState(60)
 
   const [config, updateConfig] = useConfig(name)
   const localStorageConfig = getLocalStorageConfig(name)
   useToggleControls(controls === undefined ? false : controls)
 
+  // console.log(config)
+
+  const container = useRef()
+
   return (
     <>
       <LevaControls controls={controls === undefined ? false : controls} />
       <div
+        ref={container}
         style={{
-          width: '100%',
-          height: '100vh',
-          maxHeight: '1000px',
+          // width: '100%',
+          // height: '100vh',
+          width: mobile && controls ? '390px' : '100%',
+          height: mobile && controls ? '844px' : '100vh',
+          // padding: mobile && controls ? '20px' : '0',
+          maxHeight: controls ? '100vh' : '1000px',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -64,6 +92,8 @@ const LogoAnimation = ({ controls, effectRef }) => {
               updateConfig={updateConfig}
               localStorageConfig={localStorageConfig}
               ref={effectRef}
+              containerRef={container}
+              updateName={updateName}
             />
           </PerformanceMonitor>
         </Canvas>

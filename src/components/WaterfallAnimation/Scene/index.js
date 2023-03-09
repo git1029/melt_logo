@@ -19,15 +19,19 @@ import noise from '../assets/textures/noise.png'
 
 import { blur } from '../../helpers/blurTexture'
 
+const DisableRender = () => useFrame(() => null, 1000)
+
 const Scene = ({
   name,
   controls,
   config,
   updateConfig,
   localStorageConfig,
-  canvasRef,
+  containerRef,
+  updateName,
 }) => {
   const mesh = useRef()
+  const [inView, setInView] = useState(true)
 
   const [blurStrength, setBlurStrength] = useState(2)
   const updateBlurStrength = (value) => setBlurStrength(value)
@@ -48,7 +52,7 @@ const Scene = ({
   //   console.log('USEEFFECT RENDER WATERFALL')
   // }, [])
 
-  const { upload, image } = useLeva(
+  const { deviceSize, upload, image } = useLeva(
     name,
     controls,
     defaults, // localStorage (if controls) > snippet > base
@@ -108,6 +112,7 @@ const Scene = ({
       uMouse: { value: mouse },
       uNoise: { value: null },
       uTransition: { value: new THREE.Vector4(0, 0, 3, 7) },
+      uImgScl: { value: 1 },
     }
 
     return [uniforms, mouse]
@@ -126,19 +131,21 @@ const Scene = ({
       imageStrength,
     } = defaults
 
-    mesh.current.material.uniforms.uLine.value.x = lineCount
-    mesh.current.material.uniforms.uLine.value.y = lineSpeed
-    mesh.current.material.uniforms.uLine.value.z = lineWidth
-    mesh.current.material.uniforms.uLine.value.w = colorShift
+    if (mesh.current) {
+      mesh.current.material.uniforms.uLine.value.x = lineCount
+      mesh.current.material.uniforms.uLine.value.y = lineSpeed
+      mesh.current.material.uniforms.uLine.value.z = lineWidth
+      mesh.current.material.uniforms.uLine.value.w = colorShift
 
-    mesh.current.material.uniforms.uDistortion.value.x = imageStrength
-    mesh.current.material.uniforms.uDistortion.value.y = lineDistortion
-    mesh.current.material.uniforms.uDistortion.value.z = mouseEnabled
-    mesh.current.material.uniforms.uDistortion.value.w = mouseStrength
+      mesh.current.material.uniforms.uDistortion.value.x = imageStrength
+      mesh.current.material.uniforms.uDistortion.value.y = lineDistortion
+      mesh.current.material.uniforms.uDistortion.value.z = mouseEnabled
+      mesh.current.material.uniforms.uDistortion.value.w = mouseStrength
 
-    mesh.current.material.uniforms.uColor.value = new THREE.Color(lineColor)
+      mesh.current.material.uniforms.uColor.value = new THREE.Color(lineColor)
 
-    mesh.current.material.needsUpdate = true
+      mesh.current.material.needsUpdate = true
+    }
   }, [defaults])
 
   // useEffect(() => {
@@ -147,8 +154,10 @@ const Scene = ({
   // }, [blurTexture])
 
   useEffect(() => {
-    mesh.current.material.uniforms.uNoise.value = noiseTexture
-    mesh.current.material.needsUpdate = true
+    if (mesh.current) {
+      mesh.current.material.uniforms.uNoise.value = noiseTexture
+      mesh.current.material.needsUpdate = true
+    }
   }, [noiseTexture])
 
   // useEffect(() => {
@@ -182,7 +191,18 @@ const Scene = ({
     }
   }, [size])
 
+  useEffect(() => {
+    if (!controls) {
+      if (size.height < 1000 && name !== 'waterfall-mobile')
+        updateName('waterfall-mobile')
+      else if (size.height >= 1000 && name !== 'waterfall')
+        updateName('waterfall')
+    }
+  }, [size, updateName, controls, name])
+
   useFrame((state, delta) => {
+    if (!inView) return
+
     mesh.current.material.uniforms.uTime.value += delta
 
     mouse.x += (state.mouse.x - mouse.x) * delta * 5
@@ -192,6 +212,17 @@ const Scene = ({
 
     if (!controls) handleFadeOut()
   })
+
+  // useFrame(() => null, 1000)
+
+  useEffect(() => {
+    if (containerRef.current && deviceSize) {
+      // containerRef.current.style.width = `${deviceSize.width}px`
+      // containerRef.current.style.height = `${deviceSize.height}px`
+      // containerRef.current.style.width = deviceSize.width
+      // containerRef.current.style.height = deviceSize.height
+    }
+  }, [deviceSize, containerRef])
 
   const handleFadeOut = () => {
     const time = mesh.current.material.uniforms.uTime.value
@@ -206,11 +237,12 @@ const Scene = ({
       // )
     }
 
-    if (canvasRef.current) {
-      if (time > t + 3.5 && canvasRef.current.style.display === 'block') {
-        canvasRef.current.style.display = 'none'
+    if (containerRef.current) {
+      if (time > t + 3.5 && containerRef.current.style.display === 'block') {
+        containerRef.current.style.display = 'none'
         // console.log(time)
         // console.log('hide canvas')
+        setInView(false)
       }
     }
   }
@@ -219,37 +251,43 @@ const Scene = ({
     <>
       {/* <color args={[background]} attach="background" /> */}
 
-      <OrthographicCamera
-        makeDefault
-        left={-1}
-        right={1}
-        top={1}
-        bottom={-1}
-        near={-1}
-        far={1}
-        manual
-      />
+      {!inView && <DisableRender />}
 
-      <mesh
-        ref={mesh}
-        onClick={() => {
-          const time = mesh.current.material.uniforms.uTime.value
-          const tmin = mesh.current.material.uniforms.uTransition.value.z
-          const tmax = mesh.current.material.uniforms.uTransition.value.w
-          if (time >= tmin && time < tmax) {
-            mesh.current.material.uniforms.uTransition.value.w = time
-          }
-        }}
-      >
-        <planeGeometry args={[2, 2]} />
-        <shaderMaterial
-          vertexShader={vertexShader}
-          fragmentShader={fragmentShader}
-          uniforms={uniforms}
-          transparent={true}
-          // wireframe={true}
-        />
-      </mesh>
+      {inView && (
+        <>
+          <OrthographicCamera
+            makeDefault
+            left={-1}
+            right={1}
+            top={1}
+            bottom={-1}
+            near={-1}
+            far={1}
+            manual
+          />
+
+          <mesh
+            ref={mesh}
+            onClick={() => {
+              const time = mesh.current.material.uniforms.uTime.value
+              const tmin = mesh.current.material.uniforms.uTransition.value.z
+              const tmax = mesh.current.material.uniforms.uTransition.value.w
+              if (time >= tmin && time < tmax) {
+                mesh.current.material.uniforms.uTransition.value.w = time
+              }
+            }}
+          >
+            <planeGeometry args={[2, 2]} />
+            <shaderMaterial
+              vertexShader={vertexShader}
+              fragmentShader={fragmentShader}
+              uniforms={uniforms}
+              transparent={true}
+              // wireframe={true}
+            />
+          </mesh>
+        </>
+      )}
     </>
   )
 }
