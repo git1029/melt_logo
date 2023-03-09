@@ -124,7 +124,7 @@ const Home = ({ controls }) => {
           height: '300vh',
           marginBottom: '100px',
           position: 'relative',
-          zIndex: 99,
+          zIndex: 99999,
         }}
         onScroll={() => {
           console.log('scroll')

@@ -104,7 +104,7 @@ export default /* glsl */ `
 
     uv += refracted.xy;
 
-    float uvScl = 0.75; // 0.75
+    float uvScl = uResolution.x >= 2560. ? .4 : map(uResolution.x, 0., 2560., .75, .4); // 0.75
     uv *= uvScl;
     uv += (1.-uvScl)/2.;
     uv = uv * imgScale - imgOff;
