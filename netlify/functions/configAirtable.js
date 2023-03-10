@@ -8,6 +8,8 @@ exports.handler = (event, context, callback) => {
   const KEY = process.env.REACT_APP_AIRTABLE_KEY
   // eslint-disable-next-line no-undef
   const URL = process.env.REACT_APP_AIRTABLE_ENDPOINT_URL_CONFIG
+  // eslint-disable-next-line no-undef
+  const PASSWORD = process.env.REACT_APP_MELT_PASSWORD
 
   const headers = {
     Authorization: `Bearer ${KEY}`,
@@ -31,45 +33,43 @@ exports.handler = (event, context, callback) => {
     try {
       const response = await axios.get(URL, { headers })
 
-      // console.log(response.data.records)
+      const data = response.data.records.reduce((acc, record) => {
+        const { id, fields } = record
+        const { mode, config } = fields
 
-      const data = response.data.records
-        // .filter((record) => Object.keys(record.fields).length > 0)
-        .reduce((acc, record) => {
-          const { id, fields } = record
-          const { mode, config } = fields
+        // Only return field if has mode and config set in fields
+        if (mode === undefined || config === undefined) return acc
 
-          // Only return field if has mode and config set in fields
-          if (mode === undefined || config === undefined) return acc
-
-          return { ...acc, [mode]: { ...JSON.parse(config), id } }
-        }, {})
+        return { ...acc, [mode]: { ...JSON.parse(config), id } }
+      }, {})
 
       return pass(200, data)
     } catch (error) {
-      return pass(500, { error, data: null })
+      return pass(500, { error: 'unable to fetch data' })
     }
   }
 
   const updateConfig = async () => {
     const { body } = event
-    // console.log('body', body)
 
-    const config = JSON.parse(body)
-    // console.log('typeof', typeof id)
-    // console.log('id', id)
-    // console.log(`${URL}/${id}`)
+    const { config, password } = JSON.parse(body)
+    console.log(config, password)
+
+    // Check password
+    if (password !== PASSWORD) {
+      return pass(401, { error: 'wrong password' })
+    }
 
     // Check for record on Airtable
     try {
       await axios.get(`${URL}/${config.id}`, { headers })
     } catch (error) {
-      return pass(404, { error: 'Airtable record not found' })
+      return pass(404, { error: 'airtable record not found' })
     }
 
     const updatedConfig = {
       fields: {
-        config: body,
+        config: JSON.stringify(config),
       },
     }
 
@@ -81,83 +81,11 @@ exports.handler = (event, context, callback) => {
 
       const data = JSON.parse(response.data.fields.config)
 
-      // console.log('data', data)
-      // return response.data
-
-      // return pass(200, { snippet: response.data, config: JSON.parse(body) })
-
-      // return pass(200, {
-      //   snippet: {
-      //     general: response.data.general,
-      //     title: response.data.title,
-      //   },
-      //   config: JSON.parse(body),
-      // })
-
       return pass(200, data)
     } catch (error) {
-      return pass(500, { error, data: null })
+      // console.log(error)
+      return pass(500, { error: 'something went wrong, saving failed' })
     }
-
-    // const response = await axios.get(URL, { headers })
-
-    // console.log('response', response.data)
-
-    // const config = {
-    //   fields: {
-    //     config: JSON.stringify(body),
-    //   },
-    // }
-
-    // validate
-
-    // console.log('headers', headers)
-    // console.log('config', config)
-
-    //   // Airtable API patch will update only specified fields in data
-    //   const response = await axios.patch(`${URL}/${values.id}`, config, { headers })
-    //   return response.data
-
-    // if (!title) return pass(404, { error: 'config title required' })
-
-    // const snippets = await axios.get(URL, { headers })
-    // const snippet = snippets.data.find((s) => s.title === title)
-
-    // console.log(snippet)
-
-    // if (!snippet) return pass(404, { error: 'snippet not found' })
-
-    // // Add config validation
-
-    // const content = JSON.stringify(body)
-    // const tag = `<script type="text/json" data-set="${title}">${content}</script>`
-
-    // const updatedSnippet = {
-    //   ...snippet,
-    //   general: tag,
-    // }
-
-    // // Also need to parse body to conform to config format - check against variables
-
-    // console.log('updatedSnippet', updatedSnippet)
-
-    // try {
-    //   const response = await axios.put(`${URL}/${snippet.id}`, updatedSnippet, {
-    //     headers,
-    //   })
-
-    //   // return pass(200, { snippet: response.data, config: JSON.parse(body) })
-
-    //   return pass(200, {
-    //     snippet: {
-    //       general: response.data.general,
-    //       title: response.data.title,
-    //     },
-    //     config: JSON.parse(body),
-    //   })
-    // } catch (error) {
-    //   return pass(500, { error })
-    // }
   }
 
   if (event.httpMethod === 'GET') {

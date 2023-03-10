@@ -1,10 +1,56 @@
-import { useEffect, useCallback, useState } from 'react'
+import { useEffect, useCallback, useState, useLayoutEffect } from 'react'
 import { button, levaStore } from 'leva'
 import { downloadConfig } from '../../helpers/LevaControls/downloadConfig'
 import configService from '../../../services/configService'
 
+// import { AuthContext } from '../../AdminPage/AuthContext'
+
 export const useLevaHelpers = (name, defaults, config, updateConfig) => {
   const [changes, setChanges] = useState(false)
+
+  // eslint-disable-next-line no-undef
+  const REACT_APP_MELT_PASSWORD = process.env.REACT_APP_MELT_PASSWORD
+
+  const setMessage = (text, classes = null) => {
+    const message = document.getElementById('passwordMessage')
+    if (message === null) return
+
+    const classList =
+      classes === null || classes.length === 0 ? ['show'] : ['show', ...classes]
+
+    message.classList.add(...classList)
+    message.textContent = text
+
+    if (timeoutId !== null) clearTimeout(timeoutId)
+
+    timeoutId = setTimeout(() => {
+      message.classList.remove(...classList)
+    }, 5000)
+  }
+
+  const passwordInput = document.getElementById('controls.password')
+  useLayoutEffect(() => {
+    if (passwordInput === null) return
+    passwordInput.setAttribute('type', 'password')
+    const span = document.createElement('span')
+    // span.style.marginRight = '5px'
+    span.style.padding = '5px'
+    span.style.cursor = 'pointer'
+    span.style.fontSize = '16px'
+    span.style.marginTop = '-3px'
+    span.innerHTML = '&#9678'
+    span.addEventListener('click', () => {
+      const type = passwordInput.getAttribute('type')
+      passwordInput.setAttribute('type', type === 'text' ? 'password' : 'text')
+    })
+    passwordInput.insertAdjacentElement('afterend', span)
+    const div = document.createElement('div')
+    div.setAttribute('id', 'passwordMessage')
+    div.textContent = 'Password required'
+    if (passwordInput.parentNode && passwordInput.parentNode.parentNode) {
+      passwordInput.parentNode.parentNode.insertAdjacentElement('afterend', div)
+    }
+  }, [passwordInput])
 
   const getStore = useCallback(() => {
     // console.log('GET STORE')
@@ -84,6 +130,8 @@ export const useLevaHelpers = (name, defaults, config, updateConfig) => {
     checkChanges()
   }, [updateLocalStorage, checkChanges])
 
+  let timeoutId = null
+
   const saveStore = async () => {
     // Only if diff to values in snippet
 
@@ -102,20 +150,55 @@ export const useLevaHelpers = (name, defaults, config, updateConfig) => {
     //   }
     // }
 
-    // console.log('SAVESTORE')
+    // // console.log('SAVESTORE')
     const values = getStore()
     // console.log('values', values)
 
+    const password = levaStore.get('controls.password')
+
+    // // Check password characters
+    // password.match(/^[0-9a-zA-Z.,@$!%*#?&]+$/)
+
+    if (!password || password === '') {
+      setMessage('password required')
+      return
+    } else if (password !== REACT_APP_MELT_PASSWORD) {
+      setMessage('wrong password')
+      return
+    }
+
     // Only send sub config (i.e. logo or waterfall)
     try {
-      const savedConfig = await configService.updateConfig(values)
+      const savedConfig = await configService.updateConfig(values, password)
       // console.log('saved levaHelpers', savedConfig)
       // console.log('saved levaHelpers', JSON.parse(savedConfig.fields.config))
+
+      // Set password in localStorage
+      const localPassword = window.localStorage.getItem('melt_config_password')
+      if (localPassword !== password) {
+        console.log('updating localstorage password')
+        window.localStorage.setItem('melt_config_password', password)
+      }
+
+      setMessage('save successful', ['success'])
 
       // updateConfig(savedConfig.config) // snippet
       updateConfig(savedConfig) // airtable
     } catch (error) {
       console.log(error)
+
+      setMessage(error.response.data.error)
+      // const message = document.getElementById('passwordMessage')
+      // if (message === null) return
+
+      // message.classList.add('show')
+      // message.textContent = error.response.data.error
+
+      // if (timeoutId !== null) clearTimeout(timeoutId)
+
+      // timeoutId = setTimeout(() => {
+      //   message.classList.remove('show')
+      // }, 5000)
     }
   }
 
@@ -145,6 +228,8 @@ export const useLevaHelpers = (name, defaults, config, updateConfig) => {
     }
   }, [defaults, handleEditEnd, checkChanges])
 
+  const localPassword = window.localStorage.getItem('melt_config_password')
+
   const buttonsSchema = {
     reset: button(
       () => {
@@ -161,6 +246,12 @@ export const useLevaHelpers = (name, defaults, config, updateConfig) => {
       },
       { order: 2 }
     ),
+    password: {
+      value:
+        localPassword !== null && typeof localPassword === 'string'
+          ? localPassword
+          : '',
+    },
     'save settings': button(
       () => {
         saveStore()
@@ -169,17 +260,5 @@ export const useLevaHelpers = (name, defaults, config, updateConfig) => {
     ),
   }
 
-  // const deviceSchema = {
-  //   deviceSize: {
-  //     label: 'size',
-  //     options: {
-  //       desktop: { width: '100%', height: '100vh' },
-  //       mobile: { width: '390px', height: '844px' }, // iPhone 14
-  //       // laptop: { width: 400, height: 600 },
-  //     },
-  //   },
-  // }
-
-  // return { buttons: buttonsSchema, device: deviceSchema, changes }
   return { buttons: buttonsSchema, changes }
 }

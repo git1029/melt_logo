@@ -23,6 +23,11 @@ export const Title = styled.h2`
   margin: 0 0 30px;
 `
 
+export const Title2 = styled.h3`
+  font-weight: 400;
+  margin: 0 0 20px;
+`
+
 export const Text = styled.p`
   font-size: 14px;
   margin: -15px 0 30px;

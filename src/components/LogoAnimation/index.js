@@ -65,6 +65,7 @@ const LogoAnimation = ({ controls, effectRef, mobile }) => {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
+          zIndex: 1,
         }}
       >
         <Canvas dpr={[1, 2]} gl={glSettings} onCreated={created}>

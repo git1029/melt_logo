@@ -1,0 +1,13 @@
+#passwordMessage {
+  color: orangered;
+  margin: 10px 0 5px;
+  display: none;
+}
+
+#passwordMessage.success {
+  color: limegreen;
+}
+
+#passwordMessage.show {
+  display: block;
+}

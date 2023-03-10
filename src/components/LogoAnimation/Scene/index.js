@@ -123,7 +123,7 @@ const Scene = forwardRef(
         uRefractionRatio: { value: 1 },
         uDPR: { value: 1 },
         uFadeLast: { value: -10 },
-        uControls: { value: controls ? 1 : 0 },
+        uControls: { value: 0 },
         PI: { value: Math.PI },
       }
 
@@ -137,7 +137,13 @@ const Scene = forwardRef(
       const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1)
 
       return [scene, uniforms, camera, mouse]
-    }, [target.texture, controls])
+    }, [target.texture])
+
+    useEffect(() => {
+      if (mesh.current && mesh.current.material) {
+        mesh.current.material.uniforms.uControls.value = controls ? 1 : 0
+      }
+    }, [controls])
 
     useEffect(() => {
       if (mesh.current && mesh.current.material) {

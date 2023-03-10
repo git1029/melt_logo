@@ -10,29 +10,11 @@
   min-width: 600px;
 }
 
-.admin-login {
-  display: flex;
-  flex-direction: column;
-}
-
-.admin-login-form-container {
-  box-sizing: border-box;
-  background: #def052;
-  color: #1b1b1d;
-  display: flex;
-  flex-direction: column;
-  padding: 40px;
-  width: 480px;
-  min-width: 480px;
-  max-width: 480px;
-  border-radius: 12px;
-  margin-bottom: 30px;
-}
-
 .admin-panel {
   display: flex;
   flex-direction: column;
   width: 100%;
+  flex-grow: 1;
 }
 
 .admin-view-footer {
@@ -57,11 +39,6 @@
   margin-right: 5px;
 }
 
-.user .admin-panel {
-  display: flex;
-  flex-grow: 1;
-}
-
 .admin-view {
   display: flex;
   flex-grow: 1;
@@ -69,49 +46,25 @@
   padding: 0 20px;
 }
 
-.admin-logout {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 0 20px;
-  width: 25%;
-}
-
-.admin-logout-user {
-  display: flex;
-  align-items: center;
-}
-
-.admin-logout-user .avatar {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #def052;
-  margin-right: 7px;
-}
-
 .admin-nav {
   display: flex;
   width: 50%;
   justify-content: center;
+  margin-right: 25%;
 }
 
 .admin-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 0 20px 0;
-}
-
-.user .admin-header {
   padding: 10px 30px;
 }
 
-.user .admin-header-img {
+.admin-header-img {
   width: 25%;
 }
 
-.user .admin-header img {
+.admin-header img {
   width: 50px;
   height: 50px;
 }
@@ -154,16 +107,14 @@
     justify-content: flex-start;
   }
   .admin-nav {
-    width: 70%;
+    width: auto;
     justify-content: flex-start;
-    margin-right: auto;
+    margin-left: auto;
+    margin-right: 0;
   }
-  .user .admin-header-img {
+  .admin-header-img {
     width: auto;
     margin-right: 20px;
-  }
-  .admin-logout {
-    width: 15%;
   }
 }
 
@@ -171,26 +122,12 @@
   .admin-header {
     padding: 20px 20px 20px;
   }
-  .admin-return {
-    padding-left: 20px;
-  }
 
-  .user .admin-return {
-    padding-left: 0px;
+  .admin-return {
+    padding-left: 0;
   }
 
   .admin-page {
     justify-content: flex-start;
-  }
-
-  .admin-login {
-    width: 100%;
-  }
-  .admin-login-form-container {
-    padding: 25px 30px;
-    width: 100%;
-    min-width: 320px;
-    max-width: 100%;
-    border-radius: 0;
   }
 }

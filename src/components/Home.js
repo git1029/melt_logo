@@ -86,6 +86,7 @@ const Home = ({ controls }) => {
       style={{
         backgroundColor: backgroundColor,
         backgroundImage: `url(${backgroundImage})`,
+        position: 'relative',
       }}
       className="home__container hover-background"
     >
@@ -144,6 +145,8 @@ const Home = ({ controls }) => {
             width: '30vw',
             background: '#999999',
             margin: '0 auto',
+            zIndex: 99999,
+            position: 'relative',
           }}
         ></div>
       </div>

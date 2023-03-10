@@ -1,8 +1,6 @@
-import { useState, useContext, useRef } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { AuthContext } from './AuthContext'
-import AdminForm from './AdminForm'
-import { Text, SmallButton, IFrame, Button } from './Styled'
+import { useState, useRef } from 'react'
+import { Link } from 'react-router-dom'
+import { SmallButton, IFrame, Button } from './Styled'
 import { useToggleFullScreen } from '../helpers/toggleFullScreen'
 import './Admin.css'
 import logo from './assets/favicon.png'
@@ -30,23 +28,9 @@ const AdminReturn = () => {
   )
 }
 
-const AdminPageLoggedOut = () => {
-  return (
-    <>
-      <div className="admin-page">
-        <div className="admin-login">
-          <AdminHeader />
-          <div className="admin-login-form-container">{<AdminForm />}</div>
-          <AdminReturn />
-        </div>
-      </div>
-    </>
-  )
-}
-
-const AdminNav = ({ updateMode }) => {
+const AdminNav = ({ mode, updateMode }) => {
   const buttons = [
-    { path: 'logo', label: 'Logo', ref: useRef(), className: 'selected' },
+    { path: 'logo', label: 'Logo', ref: useRef(), className: '' },
     {
       path: 'logo-mobile',
       label: 'Logo (Mobile)',
@@ -61,12 +45,14 @@ const AdminNav = ({ updateMode }) => {
     },
   ]
 
+  buttons.find((b) => b.path === mode).className = 'selected'
+
   const handleClick = (target) => {
     buttons
       .filter((b) => b !== target.ref.current)
       .forEach((b) => b.ref.current.classList.remove('selected'))
     target.ref.current.classList.add('selected')
-    // updateMode(target.text.toLowerCase())
+    window.localStorage.setItem('melt_config_page', target.path)
     updateMode(target.path)
   }
 
@@ -85,38 +71,6 @@ const AdminNav = ({ updateMode }) => {
           </Button>
         ))}
       </div>
-    </div>
-  )
-}
-
-const AdminLogout = () => {
-  const { auth, logout } = useContext(AuthContext)
-  const user = auth.currentUser()
-
-  const navigate = useNavigate()
-
-  const handleLogout = async (event) => {
-    event.preventDefault()
-
-    await logout()
-    navigate('/admin')
-  }
-  return (
-    <div className="admin-logout">
-      <div className="admin-logout-user">
-        <div className="avatar"></div>
-        <Text style={{ margin: '0', padding: '0' }}>
-          {user.user_metadata.full_name}
-        </Text>
-      </div>
-      <SmallButton
-        light
-        style={{ padding: '0', border: 'none' }}
-        type="button"
-        onClick={handleLogout}
-      >
-        Logout
-      </SmallButton>
     </div>
   )
 }
@@ -148,8 +102,10 @@ const AdminPageView = ({ mode, iframeRef }) => {
   )
 }
 
-const AdminPageLoggedIn = () => {
-  const [mode, setMode] = useState('logo')
+const AdminPage = () => {
+  const localPage = window.localStorage.getItem('melt_config_page')
+
+  const [mode, setMode] = useState(localPage === null ? 'logo' : localPage)
   const iframeRef = useRef()
   useToggleFullScreen(iframeRef)
 
@@ -167,25 +123,13 @@ const AdminPageLoggedIn = () => {
       <div className="admin-page user">
         <div className="admin-panel">
           <AdminHeader>
-            <AdminNav updateMode={updateMode} />
-            <AdminLogout />
+            <AdminNav mode={mode} updateMode={updateMode} />
           </AdminHeader>
           <AdminPageView mode={mode} iframeRef={iframeRef} />
         </div>
       </div>
     </>
   )
-}
-
-const AdminPage = () => {
-  const { auth } = useContext(AuthContext)
-  const user = auth.currentUser()
-
-  if (!user) {
-    return <AdminPageLoggedOut />
-  }
-
-  return <AdminPageLoggedIn />
 }
 
 export default AdminPage

@@ -1,5 +1,6 @@
 import { forwardRef } from 'react'
 import { Leva } from 'leva'
+import './Leva.css'
 
 const LevaControls = forwardRef(({ controls }, ref) => {
   return (

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo, useState } from 'react'
+import { useEffect, useRef, useMemo, useState, useLayoutEffect } from 'react'
 import * as THREE from 'three'
 // import { useControls, folder, button, levaStore } from 'leva'
 import { useFrame, useThree } from '@react-three/fiber'
@@ -55,8 +55,8 @@ const Scene = ({
   const { deviceSize, upload, image } = useLeva(
     name,
     controls,
-    defaults, // localStorage (if controls) > snippet > base
-    config, // snippet > base
+    defaults,
+    config,
     updateConfig,
     [mesh, imageOptions, updateBlurStrength]
   )
