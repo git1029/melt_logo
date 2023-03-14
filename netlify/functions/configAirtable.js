@@ -33,6 +33,10 @@ exports.handler = (event, context, callback) => {
     try {
       const response = await axios.get(URL, { headers })
 
+      if (!response.data || !response.data.records) {
+        return pass(404, { error: 'no data/records found' })
+      }
+
       const data = response.data.records.reduce((acc, record) => {
         const { id, fields } = record
         const { mode, config } = fields
@@ -53,10 +57,11 @@ exports.handler = (event, context, callback) => {
     const { body } = event
 
     const { config, password } = JSON.parse(body)
-    console.log(config, password)
+    // todo: validate/sanitize input
+    // console.log(config, password)
 
     // Check password
-    if (password !== PASSWORD) {
+    if (!password || password === '' || password !== PASSWORD) {
       return pass(401, { error: 'wrong password' })
     }
 
@@ -69,7 +74,10 @@ exports.handler = (event, context, callback) => {
 
     const updatedConfig = {
       fields: {
-        config: JSON.stringify(config),
+        config: JSON.stringify({
+          ...config,
+          lastUpdated: new Date().toISOString(),
+        }),
       },
     }
 

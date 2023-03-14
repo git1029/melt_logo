@@ -7,6 +7,7 @@ import Scene from './Scene'
 import { useConfig } from '../helpers/LevaControls/setupConfig'
 import { useToggleControls } from '../helpers/toggleControls'
 import { getLocalStorageConfig } from '../helpers/LevaControls/setupConfig'
+import defaultConfig from '../helpers/LevaControls/config.json'
 import { useRef } from 'react'
 
 const glSettings = {
@@ -19,13 +20,14 @@ const created = ({ gl }) => {
 }
 
 const WaterfallAnimation = ({ controls, mobile }) => {
+  const { metric, value } = defaultConfig.devices.mobile
   const [name, setName] = useState(
-    (mobile && controls) || window.innerHeight < 1000
+    (mobile && controls) ||
+      window[`inner${metric[0].toUpperCase() + metric.slice(1)}`] < value
       ? 'waterfall-mobile'
       : 'waterfall'
   )
   const updateName = (newName) => {
-    // console.log('setting name', newName)
     setName(newName)
   }
 
@@ -41,8 +43,6 @@ const WaterfallAnimation = ({ controls, mobile }) => {
   const localStorageConfig = getLocalStorageConfig(name)
   useToggleControls(controls === undefined ? false : controls)
 
-  // console.log(config)
-
   const container = useRef()
 
   return (
@@ -53,7 +53,6 @@ const WaterfallAnimation = ({ controls, mobile }) => {
         style={{
           width: mobile && controls ? '390px' : '100%',
           height: mobile && controls ? '844px' : '100vh',
-          // padding: mobile && controls ? '20px' : '0',
           display: 'block',
           position: 'fixed',
           top: 0,
@@ -61,7 +60,6 @@ const WaterfallAnimation = ({ controls, mobile }) => {
       >
         <Canvas dpr={[1, 2]} gl={glSettings} onCreated={created}>
           {controls ? <PerfMonitor /> : null}
-          {/* <PerfMonitor /> */}
           <Scene
             name={name}
             controls={controls === undefined ? false : controls}

@@ -8,6 +8,7 @@ import Scene from './Scene'
 import { useConfig } from '../helpers/LevaControls/setupConfig'
 import { useToggleControls } from '../helpers/toggleControls'
 import { getLocalStorageConfig } from '../helpers/LevaControls/setupConfig'
+import defaultConfig from '../helpers/LevaControls/config.json'
 
 const glSettings = {
   antialias: false,
@@ -17,14 +18,15 @@ const created = ({ gl }) => {
   gl.domElement.id = 'logoAnimation'
 }
 
-// const name = 'logo'
-
 const LogoAnimation = ({ controls, effectRef, mobile }) => {
+  const { metric, value } = defaultConfig.devices.mobile
   const [name, setName] = useState(
-    (mobile && controls) || window.innerHeight < 1000 ? 'logo-mobile' : 'logo'
+    (mobile && controls) ||
+      window[`inner${metric[0].toUpperCase() + metric.slice(1)}`] < value
+      ? 'logo-mobile'
+      : 'logo'
   )
   const updateName = (newName) => {
-    // console.log('setting name', newName)
     setName(newName)
   }
 
@@ -34,10 +36,6 @@ const LogoAnimation = ({ controls, effectRef, mobile }) => {
     } else {
       document.body.classList.remove('controls')
     }
-
-    // if (mobile && controls) {
-    //   setName('logo-mobile')
-    // }
   }, [controls])
 
   const [sceneFps, setSceneFps] = useState(60)
@@ -45,8 +43,6 @@ const LogoAnimation = ({ controls, effectRef, mobile }) => {
   const [config, updateConfig] = useConfig(name)
   const localStorageConfig = getLocalStorageConfig(name)
   useToggleControls(controls === undefined ? false : controls)
-
-  // console.log(config)
 
   const container = useRef()
 
@@ -56,11 +52,8 @@ const LogoAnimation = ({ controls, effectRef, mobile }) => {
       <div
         ref={container}
         style={{
-          // width: '100%',
-          // height: '100vh',
           width: mobile && controls ? '390px' : '100%',
           height: mobile && controls ? '844px' : '100vh',
-          // padding: mobile && controls ? '20px' : '0',
           maxHeight: controls ? '100vh' : '1000px',
           display: 'flex',
           justifyContent: 'center',

@@ -11,49 +11,11 @@ export default /* glsl */ `
   uniform vec4 uDistortion; // (strength, distortion, mouseEnabled, mouseStrength)
   uniform vec2 uMouse;
   uniform vec4 uTransition;
-  uniform float uImgScl;
+  uniform float uImageScale;
 
   float rand(vec2 co){
     return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
 }
-
-  vec2 getUv(vec2 uv, float flipY) {
-    vec2 newUv = uv;
-
-    vec2 aspectS = vec2(
-      uResolution.x > uResolution.y ? uResolution.x / uResolution.y : 1., 
-      uResolution.x > uResolution.y ? 1. : uResolution.y / uResolution.x 
-    );
-    vec2 aspectI = vec2(uResolution.z / uResolution.w);
-    
-    // vec2 imgScale = aspectI * aspectS;
-    // vec2 imgOff = vec2(
-    //   aspectS.x > aspectI.x ? (aspectS.x - aspectI.x) * .5 : 0.,
-    //   aspectS.y > aspectI.y ? (aspectS.y - aspectI.y) * .5 : 0.
-    // );
-
-    vec2 imgScale = aspectI * aspectS / uImgScl;
-    vec2 imgOff = vec2(
-      // aspectS.x > aspectI.x ? (aspectS.x - aspectI.x) * .5 : 0.,
-      // aspectS.y > aspectI.y ? (aspectS.y - aspectI.y) * .5 : 0.
-      (aspectS.x - aspectI.x * uImgScl) * .5 / uImgScl,
-      (aspectS.y - aspectI.y * uImgScl) * .5 / uImgScl
-    );
-
-    // if (aspectS.x > 1.) {
-    //   float scl = min(2560. / uResolution.y, aspectS.x);
-    //   imgScale /= scl;
-    //   imgOff = vec2(
-    //     aspectS.x - scl,
-    //     aspectS.y - scl
-    //   ) * 0.5 / scl;
-    // }
-
-    if (flipY != 0.) newUv.y = 1. - newUv.y;
-    newUv = newUv * imgScale - imgOff;
-
-    return newUv;
-  }
 
   // cosine based palette, 4 vec3 params
   vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
@@ -67,6 +29,41 @@ export default /* glsl */ `
   float map(float value, float min1, float max1, float min2, float max2) {
     return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
   }
+
+  vec2 getUv(vec2 uv, float flipY) {
+    vec2 imgUv = uv;
+
+    vec2 uvF = vec2(
+      uResolution.z / uResolution.x,
+      uResolution.w / uResolution.y
+    );
+
+    float imgScale = uImageScale + .0;
+
+    // Reset texture aspect
+    imgUv /= uvF;
+
+    float uImgFitWidth = 1.;
+    float offSide = uImgFitWidth == 1. ? uResolution.x / uResolution.z : uResolution.y / uResolution.w;
+
+    vec2 uvOff = vec2(
+      (uResolution.x - uResolution.z * offSide * imgScale),
+      (uResolution.y - uResolution.w * offSide * imgScale)
+    );
+
+    uvOff *= .5;
+    uvOff /= uResolution.zw;
+
+    imgUv -= uvOff;
+    imgUv *= uImgFitWidth == 1.? uResolution.z / uResolution.x : uResolution.w / uResolution.y;
+    imgUv /= imgScale;
+
+    vec2 newUv = imgUv;
+    if (flipY != 0.) newUv.y = 1. - newUv.y;
+
+    return newUv;
+  }
+
   
   void main() {
     float fx = vUv.x;
@@ -126,6 +123,9 @@ export default /* glsl */ `
 
     vec2 newUv = getUv(vUv, 0.);
     vec4 tex = texture2D(uImage, newUv + d * .1);
+
+    vec2 imgUv = newUv + d * .1;
+    if (imgUv.x < 0. || imgUv.x >= 1. || imgUv.y < 0. || imgUv.y >= 1.) tex *= 0.; 
     float b = 0.2126 * tex.r + 0.7152 * tex.g + 0.0722 * tex.b;
     y += b * 0.1 * mix(1., ny *.5+.5, fy) * uDistortion.x * 2.;
 

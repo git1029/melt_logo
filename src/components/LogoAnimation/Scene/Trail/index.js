@@ -188,7 +188,9 @@ const Trail = forwardRef(({ fps }, ref) => {
         points[i].set(mouse.x, mouse.y, 0)
       }
 
-      ref.current.material.uniforms.uDisplay.value = 1
+      if (ref.current && ref.current.material) {
+        ref.current.material.uniforms.uDisplay.value = 1
+      }
 
       // shouldn't really mutate state in useFrame but this should only be run once
       setMousePoints(true)
@@ -196,8 +198,10 @@ const Trail = forwardRef(({ fps }, ref) => {
 
     if (loaded) updatePoints(mouse, delta)
 
-    ref.current.material.uniforms.positions.value = target.texture
-    ref.current.material.uniforms.uTime.value = delta
+    if (ref.current && ref.current.material) {
+      ref.current.material.uniforms.positions.value = target.texture
+      ref.current.material.uniforms.uTime.value = delta
+    }
 
     if (!mousePoints) mouseLast.set(mouse.x, mouse.y)
 
@@ -243,7 +247,6 @@ const Trail = forwardRef(({ fps }, ref) => {
           depthWrite={false}
           precision="lowp"
           alphaTest={0}
-          // wireframe={true}
         />
       </mesh>
     </>

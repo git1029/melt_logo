@@ -11,9 +11,6 @@ export const useLeva = (
 ) => {
   const [mesh, trail] = dependencies
 
-  // let schema = {}
-
-  // if (controls) {
   const schema = {
     image: folder(
       {
@@ -28,7 +25,9 @@ export const useLeva = (
           max: 2,
           step: 0.01,
           onChange: (v) => {
-            mesh.current.material.uniforms.uImgScl.value = v
+            if (mesh.current && mesh.current.material) {
+              mesh.current.material.uniforms.uImageScale.value = v
+            }
           },
         },
       },
@@ -43,7 +42,9 @@ export const useLeva = (
           max: 1,
           step: 0.1,
           onChange: (v) => {
-            mesh.current.material.uniforms.uDisp.value.x = v
+            if (mesh.current && mesh.current.material) {
+              mesh.current.material.uniforms.uDisp.value.x = v
+            }
           },
         },
         displacementRadius: {
@@ -53,7 +54,9 @@ export const useLeva = (
           max: 1,
           step: 0.1,
           onChange: (v) => {
-            trail.current.material.uniforms.uInfo.value.z = v
+            if (trail.current && trail.current.material) {
+              trail.current.material.uniforms.uInfo.value.z = v
+            }
           },
         },
         displacementDecay: {
@@ -63,7 +66,9 @@ export const useLeva = (
           max: 1,
           step: 0.1,
           onChange: (v) => {
-            trail.current.material.uniforms.uInfo.value.w = v
+            if (trail.current && trail.current.material) {
+              trail.current.material.uniforms.uInfo.value.w = v
+            }
           },
         },
         colorNoise: {
@@ -73,7 +78,9 @@ export const useLeva = (
           max: 2,
           step: 0.1,
           onChange: (v) => {
-            mesh.current.material.uniforms.uDisp.value.y = v
+            if (mesh.current && mesh.current.material) {
+              mesh.current.material.uniforms.uDisp.value.y = v
+            }
           },
         },
         colorShift: {
@@ -83,7 +90,9 @@ export const useLeva = (
           max: 2,
           step: 0.1,
           onChange: (v) => {
-            mesh.current.material.uniforms.uDisp.value.z = v
+            if (mesh.current && mesh.current.material) {
+              mesh.current.material.uniforms.uDisp.value.z = v
+            }
           },
         },
       },
@@ -135,7 +144,9 @@ export const useLeva = (
           label: 'mouse trail',
           value: false,
           onChange: (v) => {
-            mesh.current.material.uniforms.uShowMouse.value = v
+            if (mesh.current && mesh.current.material) {
+              mesh.current.material.uniforms.uShowMouse.value = v
+            }
           },
           order: -4,
         },
@@ -143,7 +154,9 @@ export const useLeva = (
           label: 'wireframe',
           value: false,
           onChange: (v) => {
-            mesh.current.material.wireframe = v
+            if (mesh.current && mesh.current.material) {
+              mesh.current.material.wireframe = v
+            }
           },
           order: -3,
         },
@@ -151,7 +164,9 @@ export const useLeva = (
           label: 'normals',
           value: false,
           onChange: (v) => {
-            mesh.current.material.uniforms.uNormal.value = v
+            if (mesh.current && mesh.current.material) {
+              mesh.current.material.uniforms.uNormal.value = v
+            }
           },
           order: -2,
         },
@@ -167,11 +182,8 @@ export const useLeva = (
       { order: -1 }
     ),
   }
-  // }
 
-  // Could limit levaControls to empty object if !controls
-  // Also need to pass controls as dependency so store rebuilds input schema
-
+  // Need to pass controls as dependency so store rebuilds input schema
   const {
     imageUpload,
     mouseArea,
@@ -181,7 +193,6 @@ export const useLeva = (
     rotSpeed,
   } = useControls(schema, [controls])
 
-  // const { buttons, device, changes } = useLevaHelpers(
   const { buttons, changes } = useLevaHelpers(
     name,
     defaults,
@@ -189,10 +200,6 @@ export const useLeva = (
     updateConfig
   )
 
-  // const { deviceSize } = useControls(
-  //   { device: folder(device, { order: -10 }) },
-  //   [controls]
-  // )
   useControls({ controls: folder(buttons, { order: 10 }) }, [
     controls,
     changes,
@@ -200,7 +207,6 @@ export const useLeva = (
   ])
 
   return {
-    // deviceSize: controls ? deviceSize : null,
     upload: controls ? imageUpload : null,
     mouseArea: controls ? mouseArea : config.mouseArea,
     refractionRatio: controls ? refractionRatio : config.refractionRatio,

@@ -1,6 +1,7 @@
+// import { useEffect } from 'react'
+import * as THREE from 'three'
 import { useControls, folder } from 'leva'
 import { useLevaHelpers } from '../../helpers/LevaControls/levaHelpers'
-import * as THREE from 'three'
 
 export const useLeva = (
   name,
@@ -12,9 +13,6 @@ export const useLeva = (
 ) => {
   const [mesh, imageOptions, updateBlurStrength] = dependencies
 
-  // let schema = {}
-
-  // if (controls) {
   const schema = {
     image: folder(
       {
@@ -26,17 +24,6 @@ export const useLeva = (
           label: 'upload',
           image: null,
           order: -3,
-        },
-        imageScale: {
-          label: 'scale',
-          value: 1,
-          min: 0.1,
-          max: 2,
-          step: 0.01,
-          onChange: (v) => {
-            if (!mesh.current) return
-            mesh.current.material.uniforms.uImgScl.value = v
-          },
         },
         blurStrength: {
           label: 'blur',
@@ -51,13 +38,19 @@ export const useLeva = (
           // Only render blur slider if upload !== null
           render: (get) => get('image.uploadWaterfall'),
         },
-        // 'download image': button(
-        //   (get) => {
-        //     console.log('download')
-        //     console.log(get('image.blurStrength'))
-        //   },
-        //   { order: -1 }
-        // ),
+        // downloadImage: '',
+        imageScale: {
+          label: 'scale',
+          value: 1,
+          min: 0.1,
+          max: 2,
+          step: 0.01,
+          onChange: (v) => {
+            if (mesh.current && mesh.current.material) {
+              mesh.current.material.uniforms.uImageScale.value = v
+            }
+          },
+        },
         imageStrength: {
           label: 'strength',
           value: defaults.imageStrength,
@@ -65,8 +58,9 @@ export const useLeva = (
           max: 1,
           step: 0.01,
           onChange: (v) => {
-            if (!mesh.current) return
-            mesh.current.material.uniforms.uDistortion.value.x = v
+            if (mesh.current && mesh.current.material) {
+              mesh.current.material.uniforms.uDistortion.value.x = v
+            }
           },
           order: 0,
         },
@@ -82,8 +76,9 @@ export const useLeva = (
           max: 50,
           step: 1,
           onChange: (v) => {
-            if (!mesh.current) return
-            mesh.current.material.uniforms.uLine.value.x = v
+            if (mesh.current && mesh.current.material) {
+              mesh.current.material.uniforms.uLine.value.x = v
+            }
           },
         },
         lineSpeed: {
@@ -93,8 +88,9 @@ export const useLeva = (
           max: 3,
           step: 0.1,
           onChange: (v) => {
-            if (!mesh.current) return
-            mesh.current.material.uniforms.uLine.value.y = v
+            if (mesh.current && mesh.current.material) {
+              mesh.current.material.uniforms.uLine.value.y = v
+            }
           },
         },
         lineWidth: {
@@ -104,8 +100,9 @@ export const useLeva = (
           max: 1,
           step: 0.01,
           onChange: (v) => {
-            if (!mesh.current) return
-            mesh.current.material.uniforms.uLine.value.z = v
+            if (mesh.current && mesh.current.material) {
+              mesh.current.material.uniforms.uLine.value.z = v
+            }
           },
         },
         lineDistortion: {
@@ -115,16 +112,18 @@ export const useLeva = (
           max: 1,
           step: 0.01,
           onChange: (v) => {
-            if (!mesh.current) return
-            mesh.current.material.uniforms.uDistortion.value.y = v
+            if (mesh.current && mesh.current.material) {
+              mesh.current.material.uniforms.uDistortion.value.y = v
+            }
           },
         },
         lineColor: {
           label: 'color',
           value: defaults.lineColor,
           onChange: (v) => {
-            if (!mesh.current) return
-            mesh.current.material.uniforms.uColor.value = new THREE.Color(v)
+            if (mesh.current && mesh.current.material) {
+              mesh.current.material.uniforms.uColor.value = new THREE.Color(v)
+            }
           },
         },
         colorShift: {
@@ -134,8 +133,9 @@ export const useLeva = (
           max: 1,
           step: 0.01,
           onChange: (v) => {
-            if (!mesh.current) return
-            mesh.current.material.uniforms.uLine.value.w = v
+            if (mesh.current && mesh.current.material) {
+              mesh.current.material.uniforms.uLine.value.w = v
+            }
           },
         },
       },
@@ -150,8 +150,9 @@ export const useLeva = (
           max: 1,
           step: 0.01,
           onChange: (v) => {
-            if (!mesh.current) return
-            mesh.current.material.uniforms.uDistortion.value.w = v
+            if (mesh.current && mesh.current.material) {
+              mesh.current.material.uniforms.uDistortion.value.w = v
+            }
           },
         },
       },
@@ -170,22 +171,12 @@ export const useLeva = (
       { order: -1 }
     ),
   }
-  // }
 
   // Could limit levaControls to empty object if !controls
   // Also need to pass controls as dependency so store rebuilds input schema
 
   const { image, uploadWaterfall } = useControls(schema, [controls])
 
-  // const downloadBtn = document.querySelector('.leva-c-ihqPFh')
-  // if (downloadBtn) {
-  //   const btnParent = downloadBtn.parentElement
-  //   if (btnParent) {
-  //     btnParent.style.display = uploadWaterfall ? 'grid' : 'none'
-  //   }
-  // }
-
-  // const { buttons, device, changes } = useLevaHelpers(
   const { buttons, changes } = useLevaHelpers(
     name,
     defaults,
@@ -193,18 +184,39 @@ export const useLeva = (
     updateConfig
   )
 
-  // const { deviceSize } = useControls(
-  //   { device: folder(device, { order: -10 }) },
-  //   [controls]
-  // )
   useControls({ controls: folder(buttons, { order: 10 }) }, [
     controls,
     changes,
     config,
   ])
 
+  // // Add download image button template
+  // const downloadImage = document.getElementById('image.downloadImage')
+  // useEffect(() => {
+  //   if (downloadImage === null) return
+
+  //   const div = document.createElement('div')
+  //   div.setAttribute('id', 'download-image')
+  //   div.classList.add('leva-c-grzFYX')
+  //   const btn = document.createElement('button')
+  //   btn.setAttribute('id', 'download-image-button')
+  //   btn.classList.add('leva-c-ihqPFh')
+  //   btn.innerHTML = 'download image'
+  //   div.appendChild(btn)
+  //   if (
+  //     downloadImage.parentNode &&
+  //     downloadImage.parentNode.parentNode &&
+  //     downloadImage.parentNode.parentNode.parentNode
+  //   ) {
+  //     downloadImage.parentNode.parentNode.parentNode.insertAdjacentElement(
+  //       'afterend',
+  //       div
+  //     )
+  //     downloadImage.parentNode.parentNode.parentNode.style.display = 'none'
+  //   }
+  // }, [downloadImage])
+
   return {
-    // deviceSize: controls ? deviceSize : null,
     upload: controls ? uploadWaterfall : null,
     image: controls ? image : null,
   }

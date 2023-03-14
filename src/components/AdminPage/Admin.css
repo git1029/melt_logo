@@ -53,6 +53,17 @@
   margin-right: 25%;
 }
 
+.admin-nav-buttons button {
+  border-right: none;
+}
+.admin-nav-buttons button:last-of-type {
+  border-right: 1px solid;
+  border-radius: 0 4px 4px 0;
+}
+.admin-nav-buttons button:first-of-type {
+  border-radius: 4px 0 0 4px;
+}
+
 .admin-header {
   display: flex;
   justify-content: space-between;

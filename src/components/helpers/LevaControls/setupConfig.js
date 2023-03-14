@@ -17,21 +17,26 @@ export const useConfig = (name) => {
 
   useEffect(() => {
     const getServerConfig = async () => {
-      // add try catch
-      const response = await configService.getConfig()
-      // console.log('configservice', response)
-      // console.log('configservice', response[name])
+      try {
+        const response = await configService.getConfig()
+        // console.log('configservice', response)
+        // console.log('configservice', response[name])
 
-      if (response !== null && response[name] !== undefined) {
-        // console.log('setting config')
-        if (response[name].id !== defaultConfig[name].id) {
-          console.log(
-            `Mismatching record ids: ${response[name].id}, ${defaultConfig[name].id}`
-          )
+        if (response !== null && response[name] !== undefined) {
+          // console.log('setting config')
+          if (response[name].id !== defaultConfig[name].id) {
+            console.log(
+              `Mismatching record ids: ${response[name].id}, ${defaultConfig[name].id}`
+            )
+          }
+          setConfig(response[name])
+        } else {
+          console.log(`Config ${name} not found on server`)
         }
-        setConfig(response[name])
-      } else {
-        console.log(`Config ${name} not found on server`)
+      } catch (error) {
+        console.log(
+          error.response.data.error ? error.response.data.error : 'Server error'
+        )
       }
     }
 

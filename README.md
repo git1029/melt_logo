@@ -49,7 +49,8 @@ const App = () => {
 
 ```json
 {
-  "title": "animation_config_logo",
+  "title": "animation_config_logo_mobile",
+  "id": "...",
   "displacementStrength": 1,
   "displacementRadius": 1,
   "displacementDecay": 0.5,
@@ -57,7 +58,7 @@ const App = () => {
   "colorShift": 1,
   "refractionRatio": 17,
   "mouseSpeed": 20,
-  "mouseArea": 0.1,
+  "mouseArea": 0.9,
   "rotAngle": {
     "x": 90,
     "y": 50,
@@ -67,7 +68,8 @@ const App = () => {
     "x": -9,
     "y": -3,
     "z": 3
-  }
+  },
+  "imageScale": 1
 }
 ```
 
@@ -114,7 +116,8 @@ const App = () => {
 
 ```json
 {
-  "title": "animation_config_waterfall",
+  "title": "animation_config_waterfall_mobile",
+  "id": "...",
   "lineCount": 20,
   "lineSpeed": 1,
   "lineWidth": 0.5,
@@ -123,7 +126,8 @@ const App = () => {
   "colorShift": 0.5,
   "imageStrength": 0.5,
   "mouseEnabled": true,
-  "mouseStrength": 1
+  "mouseStrength": 1,
+  "imageScale": 1
 }
 ```
 

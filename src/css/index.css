@@ -6,14 +6,7 @@ body {
 body,
 html {
   background: #000000;
-  /* background: #999999; */
   margin: 0;
   padding: 0;
   color: #ffffff;
-}
-
-body.controls {
-  width: 100%;
-  height: 100vh;
-  background: #1b1b1d;
 }

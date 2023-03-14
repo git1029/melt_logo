@@ -54,6 +54,7 @@ module.exports = {
           'depthWrite',
           'precision',
           'alphaTest',
+          'toneMapped',
         ],
       },
     ],

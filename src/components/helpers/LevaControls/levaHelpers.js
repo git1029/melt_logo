@@ -9,7 +9,8 @@ export const useLevaHelpers = (name, defaults, config, updateConfig) => {
   const [changes, setChanges] = useState(false)
 
   // eslint-disable-next-line no-undef
-  const REACT_APP_MELT_PASSWORD = process.env.REACT_APP_MELT_PASSWORD
+  // const REACT_APP_MELT_PASSWORD = process.env.REACT_APP_MELT_PASSWORD
+  const localPassword = window.localStorage.getItem('melt_config_password')
 
   const setMessage = (text, classes = null) => {
     const message = document.getElementById('passwordMessage')
@@ -122,7 +123,8 @@ export const useLevaHelpers = (name, defaults, config, updateConfig) => {
   }, [updateLocalStorage, config])
 
   const downloadStore = useCallback(() => {
-    downloadConfig(name, JSON.stringify(getStore()))
+    // downloadConfig(name, JSON.stringify(getStore()))
+    downloadConfig(name, getStore())
   }, [getStore, name])
 
   const handleEditEnd = useCallback(() => {
@@ -156,14 +158,12 @@ export const useLevaHelpers = (name, defaults, config, updateConfig) => {
 
     const password = levaStore.get('controls.password')
 
+    // todo: sanitize input
     // // Check password characters
     // password.match(/^[0-9a-zA-Z.,@$!%*#?&]+$/)
 
     if (!password || password === '') {
       setMessage('password required')
-      return
-    } else if (password !== REACT_APP_MELT_PASSWORD) {
-      setMessage('wrong password')
       return
     }
 
@@ -176,7 +176,7 @@ export const useLevaHelpers = (name, defaults, config, updateConfig) => {
       // Set password in localStorage
       const localPassword = window.localStorage.getItem('melt_config_password')
       if (localPassword !== password) {
-        console.log('updating localstorage password')
+        // console.log('updating localstorage password')
         window.localStorage.setItem('melt_config_password', password)
       }
 
@@ -185,20 +185,9 @@ export const useLevaHelpers = (name, defaults, config, updateConfig) => {
       // updateConfig(savedConfig.config) // snippet
       updateConfig(savedConfig) // airtable
     } catch (error) {
-      console.log(error)
+      // console.log(error)
 
       setMessage(error.response.data.error)
-      // const message = document.getElementById('passwordMessage')
-      // if (message === null) return
-
-      // message.classList.add('show')
-      // message.textContent = error.response.data.error
-
-      // if (timeoutId !== null) clearTimeout(timeoutId)
-
-      // timeoutId = setTimeout(() => {
-      //   message.classList.remove('show')
-      // }, 5000)
     }
   }
 
@@ -227,8 +216,6 @@ export const useLevaHelpers = (name, defaults, config, updateConfig) => {
       // levaStore.disposePaths(levStore.getVisiblePaths())
     }
   }, [defaults, handleEditEnd, checkChanges])
-
-  const localPassword = window.localStorage.getItem('melt_config_password')
 
   const buttonsSchema = {
     reset: button(

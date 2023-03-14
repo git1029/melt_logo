@@ -28,7 +28,6 @@ const getConfig = async () => {
 
 const updateConfig = async (config, password) => {
   const response = await axios.put(baseUrl, { config, password })
-  console.log(response.data)
   return response.data
 }
 

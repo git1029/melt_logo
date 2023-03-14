@@ -1,10 +1,15 @@
 export const downloadConfig = (name, content) => {
+  const timestamp = new Date().toISOString()
+
+  // Could add timestamp but best to rely on server time
+  // const config = { ...content, lastUpdated: timestamp }
+
   const element = document.createElement('a')
   element.setAttribute(
     'href',
-    'data:text/plain;charset=utf-8,' + encodeURIComponent(content)
+    'data:text/plain;charset=utf-8,' +
+      encodeURIComponent(JSON.stringify(content))
   )
-  const timestamp = new Date(Date.now()).toISOString()
   element.setAttribute('download', `melt_${name}_config_${timestamp}.json`)
 
   element.style.display = 'none'

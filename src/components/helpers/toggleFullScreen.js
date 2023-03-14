@@ -14,7 +14,7 @@ export const useToggleFullScreen = (iframeRef) => {
         return
 
       if (e.key === 'f' || e.key === 'F') {
-        const adminPage = document.querySelector('.admin-page.user')
+        const adminPage = document.querySelector('.admin-page')
         if (adminPage) adminPage.classList.toggle('fullscreen')
       }
     }

@@ -12,7 +12,7 @@ export default /* glsl */ `
   uniform float uRefractionRatio;
   uniform float PI;
   uniform float uControls;
-  uniform float uImgScl;
+  uniform float uImageScale;
 
   varying vec3 worldNormal;
   varying vec3 eyeVector;
@@ -44,20 +44,64 @@ export default /* glsl */ `
 
     vec3 normal = worldNormal;
     vec3 ev = eyeVector;
+    // ev.z += 1.;
 
-    vec2 aspectS = vec2(
-      uResolution.x > uResolution.y ? uResolution.x / uResolution.y : 1., 
-      uResolution.x > uResolution.y ? 1. : uResolution.y / uResolution.x 
-    );
-    vec2 aspectI = vec2(1.);
+    // vec2 aspectS = vec2(
+    //   uResolution.x > uResolution.y ? uResolution.x / uResolution.y : 1., 
+    //   uResolution.x > uResolution.y ? 1. : uResolution.y / uResolution.x 
+    // );
+    // vec2 aspectI = vec2(1.);
+    // aspectI = vec2(
+    //   uResolution.z > uResolution.w ? 1.: uResolution.z / uResolution.w, 
+    //   uResolution.z > uResolution.w ? uResolution.w / uResolution.z : 1.
+    // );
     
-    vec2 imgScale = aspectI * aspectS / uImgScl;
-    vec2 imgOff = vec2(
-      // aspectS.x > aspectI.x ? (aspectS.x - aspectI.x) * .5 : 0.,
-      // aspectS.y > aspectI.y ? (aspectS.y - aspectI.y) * .5 : 0.
-      (aspectS.x - aspectI.x * uImgScl) * .5 / uImgScl,
-      (aspectS.y - aspectI.y * uImgScl) * .5 / uImgScl
+    // vec2 imgScale = aspectI * aspectS / uImageScale;
+    // vec2 imgOff = vec2(
+    //   // aspectS.x > aspectI.x ? (aspectS.x - aspectI.x) * .5 : 0.,
+    //   // aspectS.y > aspectI.y ? (aspectS.y - aspectI.y) * .5 : 0.
+    //   (aspectS.x - aspectI.x * uImageScale) * .5 / uImageScale,
+    //   (aspectS.y - aspectI.y * uImageScale) * .5 / uImageScale
+    // );
+
+
+    vec2 imgUv = uv;
+
+    vec2 uvF = vec2(
+      uResolution.z / uResolution.x,
+      uResolution.w / uResolution.y
     );
+
+    // float imgScale = clamp(uImgScale, 50., 200.);
+    // imgScale = 1. / (imgScale / 100.);
+
+    float imgScale = uImageScale + .0;
+
+    
+    // Reset texture aspect
+    imgUv /= uvF;
+
+    float uImgFitWidth = 1.;
+    float offSide = uImgFitWidth == 1. ? uResolution.x / uResolution.z : uResolution.y / uResolution.w;
+    // offSide /= imgScale;
+
+    vec2 uvOff = vec2(
+      (uResolution.x - uResolution.z * offSide * imgScale),
+      (uResolution.y - uResolution.w * offSide * imgScale)
+    );
+
+    uvOff *= .5;
+    uvOff /= uResolution.zw;
+    // uvOff /= imgScale;
+
+    imgUv -= uvOff;
+    imgUv *= uImgFitWidth == 1.? uResolution.z / uResolution.x : uResolution.w / uResolution.y;
+    // imgUv += uImgOffset;
+    imgUv /= imgScale;
+
+    // if (imgUv.x < 0. || imgUv.x >= 1. || imgUv.y < 0. || imgUv.y >= 1.) discard; 
+
+
 
     // imgOff += 0.5;
 
@@ -69,21 +113,6 @@ export default /* glsl */ `
     //   //   aspectS.y - scl
     //   // ) * 0.5 / scl;
     // }
-
-
-    // imgScale /= uImgScl;
-    // imgOff -= uImgScl;
-    // imgOff *= (1. * .5) / uImgScl;
-    // imgOff += (1. * .5) / uImgScl;
-
-
-    // imgOff.x += imgScale.x * uImgScl >= aspectS.x ? -((imgScale.x * uImgScl) - aspectS.x) * .25 : (imgScale.x - (imgScale.x * uImgScl));
-    // imgScale /= uImgScl;
-    // imgOff.x += (1.-uImgScl) / 2. * aspectS.x;
-    // imgOff *= uImgScl;
-
-
-    // imgScale /= uImgScl;
 
     float ft = cubicInOut(uTransition.y);
 
@@ -99,15 +128,19 @@ export default /* glsl */ `
     ior = mix(ior, 1., ft);
 
     vec3 refracted = refract(ev, normal, 1.0/ior);
-    refracted.xy /= vec2(uResolution.x/uResolution.y, 1.); 
+    // refracted.xy /= vec2(uResolution.x/uResolution.y, 1.); 
+    // refracted.xy /= uvF;
     // refracted.xy *= 1.-ft;
 
-    uv += refracted.xy;
+    imgUv += refracted.xy;
+    // imgUv += refracted.xy * 2. * (1.-uRefractionRatio);
 
-    float uvScl = uResolution.x >= 2560. ? .4 : map(uResolution.x, 0., 2560., .75, .4); // 0.75
-    uv *= uvScl;
-    uv += (1.-uvScl)/2.;
-    uv = uv * imgScale - imgOff;
+    // float uvScl = uResolution.x >= 2560. ? .4 : map(uResolution.x, 0., 2560., .75, .4); // 0.75
+    float uvScl = uResolution.x >= 2560. ? .575 : map(uResolution.x, 0., 2560., 1., .575); // 0.75
+    imgUv *= uvScl;
+    imgUv += (1.-uvScl)/2.;
+    // uv = uv * imgScale - imgOff;
+    uv = imgUv;
 
     vec2 vUv3 = uv;
       
@@ -127,6 +160,8 @@ export default /* glsl */ `
     float alpha = texture2D(uScene, uv_).a;
     alpha *= 1.-ft;
 
+
+
     float x = c.r * 2. - 1.;
     float y = c.g * 2. - 1.;
     float strength = map(uDisp.x, 0., 1., 0., 0.3);
@@ -138,10 +173,11 @@ export default /* glsl */ `
     // NOISE seems to go funny at very high uTime - fix by resetting or removing uTime
     float r = rand(vUv3 + uTime * 0.001);
     off += r * noise * c.a * c.b; // 0.01 // so as not linked to off/strength
-    off.y += (-ft * aspectS.y) * (((1.-cubicInOut(abs(uv.x * 2. -1.))) * 1. + .5) + 0.1) + r * .005 * ft * 15.;
+    // off.y += (-ft * aspectS.y) * (((1.-cubicInOut(abs(uv.x * 2. -1.))) * 1. + .5) + 0.1) + r * .005 * ft * 15.;
+    // off *= 0.;
 
     vec2 cOff2 = vec2(0.);
-    cOff2.y = (ft * aspectS.y) * r * .01;
+    // cOff2.y = (ft * aspectS.y) * r * .01;
 
     vec2 newUv = vUv3;
     vec4 color = vec4(0.);
@@ -152,6 +188,9 @@ export default /* glsl */ `
     color.g += texture2D(uLogo, newUv + off).g;
     color.b += texture2D(uLogo, newUv + off - cOff * sin(uTime + newUv.x * 1.) - cOff2 * sin(uTime * 2.)).b;
     color.a = 1.;
+
+    // Hide image overflow
+    if (newUv.x + off.x < 0. || newUv.x + off.x >= 1. || newUv.y + off.y < 0. || newUv.y + off.y >= 1.) color.rgb *= 0.; 
 
     vec4 cg = vec4(palette(uTime*.5 + newUv.x * newUv.y , vec3(.5), vec3(.5), vec3(1.), vec3(0., 0.33, 0.67)), 1.);
 

@@ -120,7 +120,7 @@ const AdminPage = () => {
 
   return (
     <>
-      <div className="admin-page user">
+      <div className="admin-page">
         <div className="admin-panel">
           <AdminHeader>
             <AdminNav mode={mode} updateMode={updateMode} />

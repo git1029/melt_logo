@@ -72,5 +72,11 @@
     "mouseEnabled": true,
     "mouseStrength": 1,
     "imageScale": 1
+  },
+  "devices": {
+    "mobile": {
+      "metric": "height",
+      "value": 500
+    }
   }
 }

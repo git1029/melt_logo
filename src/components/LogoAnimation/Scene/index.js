@@ -3,18 +3,16 @@ import * as THREE from 'three'
 import { useFrame, useThree, createPortal, useLoader } from '@react-three/fiber'
 import { useFBO, useTexture, PerspectiveCamera } from '@react-three/drei'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
-
 import { useLeva } from './controls'
+import defaultConfig from '../../helpers/LevaControls/config.json'
 
 import Trail from './Trail'
-
 import vertexPass from './shaders/vertex'
 import fragmentPass from './shaders/fragment'
 
 import meltLogo from '../assets/textures/melt_logo.png'
 import meltLogoFade from '../assets/textures/melt_logo_fade.png'
 import refractionGeometry from '../assets/models/refraction_geometry.obj'
-
 import { blur } from '../../helpers/blurTexture'
 
 // https://eriksachse.medium.com/react-three-fiber-custom-postprocessing-render-target-solution-without-using-the-effectcomposer-d3a94e6ae3c3
@@ -28,7 +26,6 @@ const Scene = forwardRef(
       config,
       updateConfig,
       localStorageConfig,
-      containerRef,
       updateName,
     },
     ref
@@ -50,28 +47,18 @@ const Scene = forwardRef(
         : config
       : config
 
-    // console.log('RENDER LOGO')
-
     // useEffect(() => {
     //   console.log('USEEFFECT RENDER LOGO')
     // }, [])
 
     const {
-      deviceSize,
       upload,
       mouseArea,
       refractionRatio,
       mouseSpeed,
       rotAngle,
       rotSpeed,
-    } = useLeva(
-      name,
-      controls,
-      defaults, // localStorage (if controls) > snippet > base
-      config, // snippet > base
-      updateConfig,
-      [mesh, trail]
-    )
+    } = useLeva(name, controls, defaults, config, updateConfig, [mesh, trail])
 
     const texture = useTexture(
       upload === undefined || upload === null ? meltLogo : upload
@@ -113,10 +100,10 @@ const Scene = forwardRef(
         uDisp: {
           value: new THREE.Vector3(1, 1, 1),
         },
-        uScene: { value: target.texture },
+        uScene: { value: null },
         uLogo: { value: null },
         uLogoC: { value: null },
-        uImgScl: { value: 1 },
+        uImageScale: { value: 1 },
         uShowMouse: { value: false },
         uNormal: { value: false },
         uTransition: { value: new THREE.Vector4(0, 0, -10, -10) },
@@ -137,7 +124,7 @@ const Scene = forwardRef(
       const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -1, 1)
 
       return [scene, uniforms, camera, mouse]
-    }, [target.texture])
+    }, [])
 
     useEffect(() => {
       if (mesh.current && mesh.current.material) {
@@ -166,7 +153,14 @@ const Scene = forwardRef(
 
     useEffect(() => {
       if (mesh.current && mesh.current.material) {
+        mesh.current.material.uniforms.uScene.value = target.texture
+      }
+    }, [target])
+
+    useEffect(() => {
+      if (mesh.current && mesh.current.material) {
         mesh.current.material.uniforms.uLogo.value = texture
+        // console.log(texture.source.data.width)
 
         if (
           !controls ||
@@ -178,8 +172,11 @@ const Scene = forwardRef(
           const blurTexture = blur(gl, 1024, 20, texture)
           mesh.current.material.uniforms.uLogoC.value = blurTexture
         }
-        mesh.current.material.uniforms.uResolution.value.z = texture.width
-        mesh.current.material.uniforms.uResolution.value.w = texture.height
+
+        mesh.current.material.uniforms.uResolution.value.z =
+          texture.source.data.width
+        mesh.current.material.uniforms.uResolution.value.w =
+          texture.source.data.height
         mesh.current.material.needsUpdate = true
       }
     }, [texture, textureFade, controls, upload, gl])
@@ -210,19 +207,11 @@ const Scene = forwardRef(
     }, [size])
 
     useEffect(() => {
-      if (containerRef.current && deviceSize) {
-        // containerRef.current.style.width = `${deviceSize.width}px`
-        // containerRef.current.style.height = `${deviceSize.height}px`
-        // containerRef.current.style.width = deviceSize.width
-        // containerRef.current.style.height = deviceSize.height
-      }
-    }, [deviceSize, containerRef])
-
-    useEffect(() => {
       if (!controls) {
-        if (size.height < 1000 && name !== 'logo-mobile')
+        const { metric, value } = defaultConfig.devices.mobile
+        if (size[metric] < value && name !== 'logo-mobile')
           updateName('logo-mobile')
-        else if (size.height >= 1000 && name !== 'logo') updateName('logo')
+        else if (size[metric] >= value && name !== 'logo') updateName('logo')
       }
     }, [size, updateName, controls, name])
 
@@ -278,6 +267,8 @@ const Scene = forwardRef(
     const getFadeTime = () => {
       // uTransition.x === stage (0 == not faded, 1 == faded) -> need way to detect if canvas out of view/completely faded
 
+      if (!mesh.current || !mesh.current.material) return
+
       const uFade = mesh.current.material.uniforms.uTransition.value
       const uFadeLast = mesh.current.material.uniforms.uFadeLast.value
       const uTime = mesh.current.material.uniforms.uTime.value
@@ -323,25 +314,31 @@ const Scene = forwardRef(
       // let length = trail.current.material.uniforms.uLength.value
       // length = THREE.MathUtils.clamp(length, 0, 2)
       // const lf = 1 - length / 2
+      let totalDelta = 0
 
-      mesh.current.material.uniforms.uTime.value += delta
-      const totalDelta = mesh.current.material.uniforms.uTime.value * 60
+      if (mesh.current && mesh.current.material) {
+        mesh.current.material.uniforms.uTime.value += delta
+        totalDelta = mesh.current.material.uniforms.uTime.value * 60
+        mesh.current.material.uniforms.uRefractionRatio.value =
+          1 - refractionRatio * mouse.smoothedVector * 0.01
 
-      mesh.current.material.uniforms.uRefractionRatio.value =
-        1 - refractionRatio * mouse.smoothedVector * 0.01
+        mesh.current.rotation.x =
+          0.0003 * rotSpeed.x * totalDelta + 0.0175 * rotAngle.x
+        mesh.current.rotation.y =
+          0.0003 * rotSpeed.y * totalDelta + 0.0175 * rotAngle.y
+        mesh.current.rotation.z =
+          0.0003 * rotSpeed.z * totalDelta + 0.0175 * rotAngle.z
+      }
 
-      cam.current.position.x = mouse.prev.x * (mouseSpeed * 0.1) * 0.3
-      cam.current.position.y = -mouse.prev.y * (mouseSpeed * 0.1) * 0.3
+      if (cam.current) {
+        cam.current.position.x = mouse.prev.x * (mouseSpeed * 0.1) * 0.3
+        cam.current.position.y = -mouse.prev.y * (mouseSpeed * 0.1) * 0.3
+      }
 
-      group.current.rotation.x = -0.05 * mouse.prev.y * (mouseSpeed * 0.1)
-      group.current.rotation.y = -0.05 * mouse.prev.x * (mouseSpeed * 0.1)
-
-      mesh.current.rotation.x =
-        0.0003 * rotSpeed.x * totalDelta + 0.0175 * rotAngle.x
-      mesh.current.rotation.y =
-        0.0003 * rotSpeed.y * totalDelta + 0.0175 * rotAngle.y
-      mesh.current.rotation.z =
-        0.0003 * rotSpeed.z * totalDelta + 0.0175 * rotAngle.z
+      if (group.current) {
+        group.current.rotation.x = -0.05 * mouse.prev.y * (mouseSpeed * 0.1)
+        group.current.rotation.y = -0.05 * mouse.prev.x * (mouseSpeed * 0.1)
+      }
     }
 
     useFrame((state, delta) => {
@@ -390,18 +387,9 @@ const Scene = forwardRef(
         {/* mouse events don't fire within portal state so need to pass root state mouse values */}
         {/* https://docs.pmnd.rs/react-three-fiber/tutorials/v8-migration-guide#createportal-creates-a-state-enclave */}
         {/* https://codesandbox.io/s/kp1w5u?file=/src/App.js */}
-        {createPortal(
-          <Trail
-            // radius={config.displacementRadius}
-            // decay={config.displacementDecay}
-            fps={fps}
-            ref={trail}
-          />,
-          scene,
-          {
-            mouse: three.mouse,
-          }
-        )}
+        {createPortal(<Trail fps={fps} ref={trail} />, scene, {
+          mouse: three.mouse,
+        })}
 
         <group ref={group}>
           <mesh
@@ -418,7 +406,6 @@ const Scene = forwardRef(
               side={THREE.FrontSide}
               wireframe={false}
               transparent={true}
-              // eslint-disable-next-line react/no-unknown-property
               toneMapped={false}
             />
           </mesh>
