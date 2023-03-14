@@ -76,7 +76,7 @@
   "devices": {
     "mobile": {
       "metric": "height",
-      "value": 500
+      "value": 1000
     }
   }
 }
